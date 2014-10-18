@@ -22,6 +22,12 @@ function createGraph() {
 				'put/moo.fj': 21,
 				'cheetos/rule.js': 30,
 				'some/long/long/long/random/path/woooo/meow.js': 1
+			},
+			'we/have/node.js': {
+				'some/file/path2': 12,
+				'put/moo.fj': 21,
+				'cheetos/rule.js': 30,
+				'some/long/long/long/random/path/woooo/meow.js': 1
 			}
 		}
 	};
@@ -83,18 +89,18 @@ function Node(filepath, numNeighbors, lineNum) {
 	
 	this.color = new THREE.Color();
 
-	console.log(numNeighbors, '/', maxNeighbors);
 	var red = ((numNeighbors - 1) * 1.0 / (maxNeighbors - 1));
 	var blue = 1 - red;
 	var green = 0.1;
-	console.log(red, blue);
 
 	this.color.setRGB(red, green, blue);
+
+	var scaleAmt = 20 + 2 * Math.sqrt(lineNum);
 
 	var map = THREE.ImageUtils.loadTexture('../images/sprite.png');
 	var material = new THREE.SpriteMaterial({ map: map, color: this.color, fog: true, opacity: 0.9 });
 	this.object = new THREE.Sprite(material);
-	this.object.scale.normalize().multiplyScalar(20 + 2 * Math.sqrt(lineNum));
+	this.object.scale.normalize().multiplyScalar(scaleAmt);
 
 	// var material = new THREE.SpriteCanvasMaterial({
 	// 	color: 0x0,
@@ -136,12 +142,12 @@ function Node(filepath, numNeighbors, lineNum) {
 	// });
 	
 	this.label = makeTextSprite(this.filepath, {
-		fontsize: 32,
+		fontsize: 18,
 		fontface: "Arial",
 		borderColor: {
 			r:255, g:255, b:255, a:1.0
 		}
-	});
+	}, scaleAmt);
 
 	this.label.position.set(this.pos.x, this.pos.y, this.pos.z + 1);
 
@@ -163,7 +169,6 @@ function Node(filepath, numNeighbors, lineNum) {
 	// this.object.add(this.material);
 	this.object.currentHex = this.object.material.color.getHex();
 	this.object.material.color.setHex( this.object.currentHex );
-	console.log(this.object.material.color);
 }
 
 Node.prototype.draw = function() {
@@ -215,7 +220,7 @@ function Edge(startNode, endNode, weight) {
 
 
 	this.line = new THREE.Line(this.geometry, new THREE.LineBasicMaterial({
-		linewidth: weight * .9,
+		linewidth: Math.sqrt(weight),
 		color: 0xffffff , 
 		opacity: 0.9,
 		transparent: false
@@ -314,7 +319,7 @@ function init() {
 	document.body.appendChild( container );
 	projector = new THREE.Projector();
 	camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 10000 );
-	camera.position.z = 500;
+	camera.position.z = 300;
 	camera.forward = projector.unprojectVector(new THREE.Vector3(0, 0, 0.5), camera).sub(camera.position).normalize();
 
 	controls = new THREE.TrackballControls( camera );
@@ -736,7 +741,7 @@ function render() {
 
 }
 
-function makeTextSprite( message, parameters ) {
+function makeTextSprite( message, parameters, yAdjust ) {
 	if ( parameters === undefined ) parameters = {};
 	
 	var fontface = parameters.hasOwnProperty("fontface") ? 
@@ -754,17 +759,33 @@ function makeTextSprite( message, parameters ) {
 	var backgroundColor = parameters.hasOwnProperty("backgroundColor") ?
 		parameters["backgroundColor"] : { r:0, g:0, b:0, a:1.0 };
 
-	var spriteAlignment = THREE.SpriteMaterial.alignment;
+	// var spriteAlignment = THREE.SpriteMaterial.alignment;
 		
 	var canvas = document.createElement('canvas');
+	// canvas.width = message.length * fontsize;
+	// canvas.height = fontsize * 1.4;
+	
 	var context = canvas.getContext('2d');
-	console.log(context);
+
+	// canvas.style.width  = message.length * fontsize + 'px';
+	console.log(canvas);
+	if (message.length > 30) {
+		canvas.width += 200;
+		// 
+	}
+	if (yAdjust > canvas.height) {
+		canvas.height += yAdjust;
+	}
+	console.log(yAdjust);
+	// canvas.width = canvas.width;
+	console.log(canvas);
+	
 	context.font = "Bold " + fontsize + "px " + fontface;
     
 	// get size data (height depends only on font size)
 	var metrics = context.measureText( message );
 	var textWidth = metrics.width;
-	
+
 	// background color
 	context.fillStyle   = "rgba(" + backgroundColor.r + "," + backgroundColor.g + ","
 								  + backgroundColor.b + "," + backgroundColor.a + ")";
@@ -773,13 +794,29 @@ function makeTextSprite( message, parameters ) {
 								  + borderColor.b + "," + borderColor.a + ")";
 
 	context.lineWidth = borderThickness;
-	roundRect(context, borderThickness/2, borderThickness/2, textWidth + borderThickness, fontsize * 1.4 + borderThickness, 2);
+	var w = textWidth + borderThickness;
+	var h = fontsize * 1.4 + borderThickness;
 	// 1.4 is extra height factor for text below baseline: g,j,p,q.
-	
+	// canvas.width = textWidth;
+	// canvas.width = textWidth;
+	context.textAlign = "center";
+	context.textBaseline = "middle";
+
+	var y = canvas.height / 2 - yAdjust;
+
+	roundRect(context, canvas.width / 2 - w / 2, y, w, h, 2);
+
+	// context.fillRect(0, 0, canvas.width, canvas.height);
+
 	// text color
 	context.fillStyle = "rgba(255, 255, 255, 1.0)";
 
-	context.fillText( message, borderThickness, fontsize + borderThickness);
+	context.fillText(message, canvas.width / 2, y + fontsize - 5);
+	
+	// context.strokeRect(0, 0, canvas.width, canvas.height);
+
+
+	// context.fillText( message, borderThickness, fontsize + borderThickness);
 	
 	// canvas contents will be used for a texture
 	var texture = new THREE.Texture(canvas) 
@@ -802,7 +839,7 @@ function makeTextSprite( message, parameters ) {
 // function for drawing rounded rectangles
 function roundRect(ctx, x, y, w, h, r) {
     ctx.beginPath();
-    ctx.moveTo(x+r, y);
+    // ctx.moveTo(x+r, y);
     ctx.lineTo(x+w-r, y);
     ctx.quadraticCurveTo(x+w, y, x+w, y+r);
     ctx.lineTo(x+w, y+h-r);
