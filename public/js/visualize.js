@@ -283,7 +283,7 @@ var screenSpacePosition = new THREE.Vector3();
 var mouse = new THREE.Vector2(),
 offset = new THREE.Vector3(),
 INTERSECTED, SELECTED;
-
+var graph;
 init();
 animate();
 
@@ -294,7 +294,7 @@ document.addEventListener('mousemove', function(event){
 function init() {
 
 	// var graph = createGraph();
-	var graph = {
+	graph = {
 		nodes: [],
 		lineNums: [],
 		edges: {}
@@ -303,8 +303,9 @@ function init() {
 	var GRAF = JSON.parse(localStorage.getItem('GRAF'));
 	localStorage.removeItem('GRAF');
 
-	console.log(GRAF);
+	// console.log(GRAF);
 
+	graph.repo = GRAF.repo_link;
 	GRAF.array.forEach(function(n) {
 		graph.nodes.push(n.fullPath);
 		graph.lineNums.push(n.line_num);
@@ -313,7 +314,7 @@ function init() {
 		}
 	});
 
-	console.log(graph);
+	// console.log(graph);
 
 	var numNeighbors = {};
 	graph.nodes.forEach(function(n) {
@@ -352,7 +353,7 @@ function init() {
 				var neighborIndex = graph.nodes.indexOf(neighborKey);
 				var neighbor = nodes[neighborIndex];
 				var weight = currEdges[neighborKey];
-				console.log(n, neighbor);
+				// console.log(n, neighbor);
 				edges.push(new Edge(n, neighbor, weight));
 			});
 		}
@@ -602,7 +603,9 @@ function onDocumentDoubleClick( event ) {
 
 		SELECTED = intersects[ 0 ].object;
 		var index = objects.indexOf(SELECTED);
-		window.open("https://www.google.com?" + nodes[index].filepath);
+		var firstSlashIndex = nodes[index].filepath.indexOf('/');
+
+		window.open(graph.repo + '/blob/master/' + nodes[index].filepath.slice(firstSlashIndex));
 		onDocumentMouseUp(null);
 		var intersects = raycaster.intersectObject( plane );
 		offset.copy( intersects[ 0 ].point ).sub( plane.position );
