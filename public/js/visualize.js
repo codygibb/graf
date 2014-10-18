@@ -323,7 +323,7 @@ function init() {
 	controls.panSpeed = 0.8;
 	controls.noZoom = false;
 	controls.noPan = false;
-	controls.staticMoving = true;
+	controls.staticMoving = false;
 	controls.dynamicDampingFactor = 0.3;
 
 	scene = new THREE.Scene();
@@ -548,7 +548,15 @@ function onDocumentMouseDown( event ) {
 		controls.enabled = false;
 
 		SELECTED = intersects[ 0 ].object;
+		console.log(SELECTED);
 
+		var index = objects.indexOf(SELECTED);
+
+		console.log(nodes[index].filepath);
+		window.open("https://www.google.com?" + nodes[index].filepath);
+		// intersects[ 0 ].object.materials[ 0 ].
+		// document.getElementById(SELECTED.id).mouseUp();
+		onDocumentMouseUp(null);
 		var intersects = raycaster.intersectObject( plane );
 		offset.copy( intersects[ 0 ].point ).sub( plane.position );
 
@@ -560,7 +568,8 @@ function onDocumentMouseDown( event ) {
 
 function onDocumentMouseUp( event ) {
 
-	event.preventDefault();
+	if (event)
+		event.preventDefault();
 
 	controls.enabled = true;
 
@@ -757,29 +766,30 @@ function makeTextSprite( message, parameters ) {
 	var spriteAlignment = THREE.SpriteMaterial.alignment;
 		
 	var canvas = document.createElement('canvas');
+	canvas.width = 512;
+	canvas.height = 256;
 	var context = canvas.getContext('2d');
 	console.log(context);
 	context.font = "Bold " + fontsize + "px " + fontface;
-    
 	// get size data (height depends only on font size)
 	var metrics = context.measureText( message );
-	var textWidth = metrics.width;
-	
+	var textWidth = metrics.width +10;
 	// background color
 	context.fillStyle   = "rgba(" + backgroundColor.r + "," + backgroundColor.g + ","
 								  + backgroundColor.b + "," + backgroundColor.a + ")";
 	// border color
 	context.strokeStyle = "rgba(" + borderColor.r + "," + borderColor.g + ","
 								  + borderColor.b + "," + borderColor.a + ")";
-
 	context.lineWidth = borderThickness;
+	context.textAlign = "center";
+	context.baseline = "middle";
+	context.fillStyle = "rgba(255, 255, 255, 1.0)";
+
 	roundRect(context, borderThickness/2, borderThickness/2, textWidth + borderThickness, fontsize * 1.4 + borderThickness, 2);
 	// 1.4 is extra height factor for text below baseline: g,j,p,q.
 	
 	// text color
-	context.fillStyle = "rgba(255, 255, 255, 1.0)";
-
-	context.fillText( message, borderThickness, fontsize + borderThickness);
+	context.fillText( message, canvas.width/2, canvas.height/2);
 	
 	// canvas contents will be used for a texture
 	var texture = new THREE.Texture(canvas) 
