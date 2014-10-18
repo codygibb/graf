@@ -7,21 +7,22 @@ var requestP = node_fn.lift(request);
 var unzip = require('unzip');
 var path = require('path');
 
-var graf_array = [];
-var path_set = [];
 
-function cleanGraph() {
+
+function cleanGraph(graf_array, path_set) {
 	for (var i = 0; i < graf_array.length; i++) {
-		Object.keys(graf_array[i].neighbors).forEach(function(path) {
-			if (path_set.indexOf(path) < 0) {
-				console.log(path);
-				delete graf_array[i].neighbors[path];
-			}
-		});
+		if (graf_array[i].neighbors) {
+			Object.keys(graf_array[i].neighbors).forEach(function(path) {
+				if (path_set.indexOf(path) < 0) {
+					console.log(path);
+					delete graf_array[i].neighbors[path];
+				}
+			});
+		}
 	}
 }
 
-function process(data, fileName) {
+function process(data, fileName, graf_array, path_set) {
 	if (typeof fileName != 'string') {
 		return;
 	}
@@ -124,48 +125,57 @@ function measureModuleUsage(lines, modules) {
 // };
 
 //var url = 'https://github.com/codygibb/code-cache';
-var url = 'https://github.com/ryanewing/PubStar';
+// var url = 'https://github.com/ryanewing/PubStar';
 
-//function buildGraf(url) {
-	var tempZipFilePath = './tmp/' + new Date().getTime() + Math.random();
+var parseCtrl = {
+	buildGraf: function(req, res) {
+		var graf_array = [];
+		var path_set = [];
+		var url = req.body.url;
 
-	request({
-		url: url + '/archive/master.zip',
-		method: 'GET'
-	})
-	.pipe(unzip.Parse())
-	.on('entry', function (entry) {
-	    var fileName = entry.path;
-	    var type = entry.type; // 'Directory' or 'File'
-	    var size = entry.size;
-	    if (fileName.slice(-3) == '.js' && (fileName.length < 7 || fileName.slice(-7) != '-min.js')) {
-		    // exclude min.js and makes sure we only check files >7 chars
-			var data = '';
-			//console.log(fileName);
-			// var required = '../../mymodule.js';
-			// var requiredPath = path.normalize(path.dirname(fileName) + '/' + required);
-			entry.on('data', function(chunk) {
-				data += chunk;
-			});
-			entry.on('end', function() {
-				process(data, fileName);
-			});
-	    } else {
-	      entry.autodrain();
-	    }
-	  })
-	.on('close', function() {
-		//console.log("yay");
-		
-		cleanGraph();
-		console.log(graf_array);
-		var graf = {
-			"repo_link": url,
-			"array": graf_array
-		}
-		return graf;
-	});
-//}
+		var tempZipFilePath = './tmp/' + new Date().getTime() + Math.random();
+
+		request({
+			url: url + '/archive/master.zip',
+			method: 'GET'
+		})
+		.pipe(unzip.Parse())
+		.on('entry', function (entry) {
+		    var fileName = entry.path;
+		    var type = entry.type; // 'Directory' or 'File'
+		    var size = entry.size;
+		    if (fileName.slice(-3) == '.js' && (fileName.length < 7 || fileName.slice(-7) != '-min.js')) {
+			    // exclude min.js and makes sure we only check files >7 chars
+				var data = '';
+				//console.log(fileName);
+				// var required = '../../mymodule.js';
+				// var requiredPath = path.normalize(path.dirname(fileName) + '/' + required);
+				entry.on('data', function(chunk) {
+					data += chunk;
+				});
+				entry.on('end', function() {
+					process(data, fileName, graf_array, path_set);
+				});
+		    } else {
+		      entry.autodrain();
+		    }
+		  })
+		.on('close', function() {
+			//console.log("yay");
+			
+			cleanGraph(path_set);
+			console.log(graf_array, path_set);
+
+			var graf = {
+				"repo_link": url,
+				"array": graf_array
+			}
+			res.json(graf);
+		});
+	}
+};
+
+module.exports = parseCtrl;
 
 // , function(err, res, body) {
 // 	console.log(body);

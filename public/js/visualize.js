@@ -281,18 +281,28 @@ document.addEventListener('mousemove', function(event){
 })
 
 function init() {
+
 	// var graph = createGraph();
 	var graph = {
 		nodes: [],
 		lineNums: [],
 		edges: {}
 	}
-	var g = createGraf();
-	g.array.forEach(function(n) {
+
+	var GRAF = JSON.parse(localStorage.getItem('GRAF'));
+	localStorage.removeItem('GRAF');
+
+	console.log(GRAF);
+
+	GRAF.array.forEach(function(n) {
 		graph.nodes.push(n.fullPath);
 		graph.lineNums.push(n.line_num);
-		graph.edges[n.fullPath] = n.neighbors;
+		if (!$.isEmptyObject(n.neighbors)) {
+			graph.edges[n.fullPath] = n.neighbors;
+		}
 	});
+
+	console.log(graph);
 
 	var numNeighbors = {};
 	graph.nodes.forEach(function(n) {
@@ -331,6 +341,7 @@ function init() {
 				var neighborIndex = graph.nodes.indexOf(neighborKey);
 				var neighbor = nodes[neighborIndex];
 				var weight = currEdges[neighborKey];
+				console.log(n, neighbor);
 				edges.push(new Edge(n, neighbor, weight));
 			});
 		}
@@ -793,7 +804,7 @@ function makeTextSprite( message, parameters, yAdjust ) {
 	var context = canvas.getContext('2d');
 
 	// canvas.style.width  = message.length * fontsize + 'px';
-	console.log(canvas);
+	// console.log(canvas);
 	if (message.length > 30) {
 		canvas.width += 200;
 		// 
@@ -801,9 +812,9 @@ function makeTextSprite( message, parameters, yAdjust ) {
 	if (yAdjust > canvas.height) {
 		canvas.height += yAdjust;
 	}
-	console.log(yAdjust);
+	// console.log(yAdjust);
 	// canvas.width = canvas.width;
-	console.log(canvas);
+	// console.log(canvas);
 	
 	context.font = "Bold " + fontsize + "px " + fontface;
     
