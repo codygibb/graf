@@ -1,5 +1,10 @@
-extends layout
-
-block content
-  h1= title
-  p Welcome to #{title}
+doctype html
+html
+    head
+        title Graf
+        link(rel='stylesheet', href='/bower_components/bootstrap/dist/css/bootstrap.css')
+        script(src='/js/index.js')
+        
+    body
+        h1 Graf
+        a(href='/visualize') Visualize

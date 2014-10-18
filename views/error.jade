@@ -1,6 +1,10 @@
-extends layout
-
-block content
-  h1= message
-  h2= error.status
-  pre #{error.stack}
+doctype html
+html
+    head
+        title Graf
+        link(rel='stylesheet', href='/bower_components/dist/css/bootstrap.css')
+        
+    body
+        h1= message
+        h2= error.status
+        pre #{error.stack}
