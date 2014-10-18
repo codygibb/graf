@@ -106,7 +106,7 @@ function Node(filepath, numNeighbors, lineNum) {
 	// });
 	// this.object = new THREE.Sprite(material);
 	// this.object.scale.normalize().multiplyScalar(50 * numNeighbors);
-	console.log(filepath, numNeighbors);
+	// console.log(filepath, numNeighbors);
 
 	this.pos = this.object.position;
 	this.pos.set(Math.random() * 200, Math.random() * 200, Math.random() * 200);
@@ -210,6 +210,9 @@ function Edge(startNode, endNode, weight) {
 
 	this.geometry.vertices.push(this.startNode.pos);
 	this.geometry.vertices.push(this.endNode.pos);
+
+	var geometry = new THREE.CylinderGeometry( 5, 5, 20, 32 );
+
 
 	this.line = new THREE.Line(this.geometry, new THREE.LineBasicMaterial({
 		linewidth: weight * .9,
@@ -412,10 +415,15 @@ function init() {
 
 	scene.add( sphereMesh );
 
-	renderer = new THREE.WebGLRenderer( { antialias: false } );
+	renderer = new THREE.WebGLRenderer( { antialias: true } );
 	renderer.setSize( window.innerWidth, window.innerHeight );
 	renderer.setClearColor(bgColor, 1);
 	renderer.autoClear = false;
+	renderer.shadowMapType = THREE.PCFSoftShadowMap;
+	renderer.shadowMapEnabled = true;
+	light.shadowMapWidth = 1024; // default is 512
+	light.shadowMapHeight = 1024; // default is 512
+
 
 	container.appendChild( renderer.domElement );
 
