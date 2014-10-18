@@ -491,7 +491,7 @@ function init() {
 	stats = new Stats();
 	stats.domElement.style.position = 'absolute';
 	stats.domElement.style.top = '0px';
-	container.appendChild( stats.domElement );
+	// container.appendChild( stats.domElement );
 
 	renderer.domElement.addEventListener( 'mousemove', onDocumentMouseMove, false );
 	renderer.domElement.addEventListener( 'mousedown', onDocumentMouseDown, false );
@@ -986,7 +986,7 @@ function initPostprocessing() {
 	postprocessing.godraysFakeSunUniforms.bgColor.value.setHex( bgColor );
 	postprocessing.godraysFakeSunUniforms.sunColor.value.setHex( sunColor );
 
-	postprocessing.godrayCombineUniforms.fGodRayIntensity.value = 0.4;
+	postprocessing.godrayCombineUniforms.fGodRayIntensity.value = 0.35;
 
 	postprocessing.quad = new THREE.Mesh( new THREE.PlaneGeometry( window.innerWidth, height ), postprocessing.materialGodraysGenerate );
 	postprocessing.quad.position.z = -9900;
