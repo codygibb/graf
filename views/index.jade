@@ -3,9 +3,17 @@ html
     head
         title Graf
         link(rel='stylesheet', href='/bower_components/bootstrap/dist/css/bootstrap.css')
+        link(rel='stylesheet', href='/css/style.css')
         script(src='/bower_components/pegjs/src/parser.pegjs')
         script(src='/js/index.js')
         
     body
-        h1 Graf
-        a(href='/visualize') Visualize
+        .container
+            .jumbotron
+                h1#title graf
+                br
+                br
+                form
+                    .form-group
+                        input.form-control(placeholder='Enter public github repo URL')
+                    button.btn.btn-success.btn-block Visualize

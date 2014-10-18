@@ -1,7 +1,11 @@
 function createGraph() {
 	return {
 		nodes: ['my/file/path1', 'some/file/path2', 'random/file/path3', 'i/heart/three.js', 'we/have/node.js', 'meow/moo/roof.py', 'some/other/path7', 'put/moo.fj', 'cheetos/rule.js', 'some/long/long/long/random/path/woooo/meow.js'],
+		lineNums: [50, 200, 500, 10, 8, 300, 897, 150, 140, 120],
 		edges: {
+			'some/file/path2': {
+				'put/moo.fj': 30
+			},
 			'my/file/path1': {
 				'some/file/path2': 5,
 				'random/file/path3': 10,
@@ -9,9 +13,12 @@ function createGraph() {
 			},
 			'i/heart/three.js': {
 				'meow/moo/roof.py': 2,
-				'we/have/node.js': 3
+				'we/have/node.js': 3,
+				'cheetos/rule.js': 16
 			},
 			'some/other/path7': {
+				'we/have/node.js': 15,
+				'some/file/path2': 12,
 				'put/moo.fj': 21,
 				'cheetos/rule.js': 30,
 				'some/long/long/long/random/path/woooo/meow.js': 1
@@ -65,22 +72,29 @@ function zDistanceToCamera(position) {
 
 var nodes = [];
 var edges = [];
-
+var maxNeighbors = 1;
 // var dpGeometry = new THREE.PlaneGeometry(0.82, 0.82);
 
-function Node(filepath, numNeighbors) {
+function Node(filepath, numNeighbors, lineNum) {
 	this.filepath = filepath;
 
 	// this.geometry = new THREE.SphereGeometry(100, 100, 100);
 	// this.object = new THREE.Mesh(this.geometry, new THREE.MeshLambertMaterial({ color: Math.random() * 0xffffff }));
 	
 	this.color = new THREE.Color();
-	this.color.setRGB(Math.random() * 255, Math.random() * 255, Math.random() * 255);
+
+	console.log(numNeighbors, '/', maxNeighbors);
+	var red = ((numNeighbors - 1) * 1.0 / (maxNeighbors - 1));
+	var blue = 1 - red;
+	var green = 0.1;
+	console.log(red, blue);
+
+	this.color.setRGB(red, green, blue);
 
 	var map = THREE.ImageUtils.loadTexture('../images/sprite.png');
 	var material = new THREE.SpriteMaterial({ map: map, color: this.color, fog: true, opacity: 0.9 });
 	this.object = new THREE.Sprite(material);
-	this.object.scale.normalize().multiplyScalar(20 + 5 * numNeighbors);
+	this.object.scale.normalize().multiplyScalar(20 + 2 * Math.sqrt(lineNum));
 
 	// var material = new THREE.SpriteCanvasMaterial({
 	// 	color: 0x0,
@@ -92,7 +106,6 @@ function Node(filepath, numNeighbors) {
 	// });
 	// this.object = new THREE.Sprite(material);
 	// this.object.scale.normalize().multiplyScalar(50 * numNeighbors);
-
 	console.log(filepath, numNeighbors);
 
 	this.pos = this.object.position;
@@ -148,6 +161,9 @@ function Node(filepath, numNeighbors) {
 	// this.material = new THREE.MeshBasicMaterial({ map: defaultImg });
 	// this.mesh = new THREE.Mesh(dpGeometry, this.material);
 	// this.object.add(this.material);
+	this.object.currentHex = this.object.material.color.getHex();
+	this.object.material.color.setHex( this.object.currentHex );
+	console.log(this.object.material.color);
 }
 
 Node.prototype.draw = function() {
@@ -259,15 +275,19 @@ function init() {
 					numNeighbors[k] = 1;
 					numNeighbors[n] = (numNeighbors[n]) ? numNeighbors[n] + 1 : 1;
 				}
+				maxNeighbors = Math.max(maxNeighbors, numNeighbors[k], numNeighbors[n]);
 			});
 		}
 	});
 
+	var i = 0;
 	graph.nodes.forEach(function(n) {
+
 		if (!numNeighbors[n]) {
 			numNeighbors[n] = 0;
 		}
-		nodes.push(new Node(n, numNeighbors[n]));
+		nodes.push(new Node(n, numNeighbors[n], graph.lineNums[i]));
+		i++;
 	});
 
 	for (var i in graph.nodes) {
@@ -480,10 +500,10 @@ function onDocumentMouseMove( event ) {
 
 		if ( INTERSECTED != intersects[ 0 ].object ) {
 
-			if ( INTERSECTED ) INTERSECTED.material.color.setHex( INTERSECTED.currentHex );
+			// if ( INTERSECTED ) INTERSECTED.material.color.setHex( INTERSECTED.currentHex );
 
 			INTERSECTED = intersects[ 0 ].object;
-			INTERSECTED.currentHex = INTERSECTED.material.color.getHex();
+			// INTERSECTED.currentHex = INTERSECTED.material.color.getHex();
 
 			plane.position.copy( INTERSECTED.position );
 			plane.lookAt( camera.position );
@@ -494,7 +514,7 @@ function onDocumentMouseMove( event ) {
 
 	} else {
 
-		if ( INTERSECTED ) INTERSECTED.material.color.setHex( INTERSECTED.currentHex );
+		// if ( INTERSECTED ) INTERSECTED.material.color.setHex( INTERSECTED.currentHex );
 
 		INTERSECTED = null;
 
