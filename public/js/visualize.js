@@ -103,9 +103,15 @@ function Node(filepath, numNeighbors, lineNum) {
 	
 	this.color = new THREE.Color();
 
-	var red = ((numNeighbors - 1) * 1.0 / (maxNeighbors - 1));
-	var blue = 1 - red;
-	var green = 0.1;
+	if (numNeighbors == 0) {
+		var red = 0;
+		var blue = 0.3;
+		var green = 0;
+	} else {
+		var red = ((numNeighbors - 1) * 1.0 / (maxNeighbors - 1));
+		var blue = 1 - red;
+		var green = 0.1;
+	}
 
 	this.color.setRGB(red, green, blue);
 
