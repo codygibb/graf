@@ -163,7 +163,7 @@ var parseCtrl = {
 		.on('close', function() {
 			//console.log("yay");
 			
-			cleanGraph(path_set);
+			cleanGraph(graf_array, path_set);
 			console.log(graf_array, path_set);
 
 			var graf = {
