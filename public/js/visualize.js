@@ -1,20 +1,20 @@
 function createGraph() {
 	return {
-		nodes: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'],
+		nodes: ['my/file/path1', 'some/file/path2', 'random/file/path3', 'i/heart/three.js', 'we/have/node.js', 'meow/moo/roof.py', 'some/other/path7', 'put/moo.fj', 'cheetos/rule.js', 'some/long/long/long/random/path/woooo/meow.js'],
 		edges: {
-			'1': {
-				'2': 5,
-				'3': 10,
-				'4': 10
+			'my/file/path1': {
+				'some/file/path2': 5,
+				'random/file/path3': 10,
+				'i/heart/three.js': 11
 			},
-			'4': {
-				'6': 2,
-				'5': 2
+			'i/heart/three.js': {
+				'meow/moo/roof.py': 2,
+				'we/have/node.js': 3
 			},
-			'7': {
-				'8': 20,
-				'9': 30,
-				'10': 1
+			'some/other/path7': {
+				'put/moo.fj': 21,
+				'cheetos/rule.js': 30,
+				'some/long/long/long/random/path/woooo/meow.js': 1
 			}
 		}
 	};
@@ -71,18 +71,54 @@ var edges = [];
 
 
 
-function Node(filepath) {
+function Node(filepath, numNeighbors) {
 	this.filepath = filepath;
 
-	this.geometry = new THREE.SphereGeometry(100, 100, 100);
-	this.object = new THREE.Mesh(this.geometry, new THREE.MeshLambertMaterial({ color: Math.random() * 0xffffff }));
-
+	// this.geometry = new THREE.SphereGeometry(100, 100, 100);
+	// this.object = new THREE.Mesh(this.geometry, new THREE.MeshLambertMaterial({ color: Math.random() * 0xffffff }));
+	var map = THREE.ImageUtils.loadTexture('../images/sea_otter.gif');
+	var material = new THREE.SpriteMaterial({ map: map, color: 0xffffff, fog: true });
+	this.object = new THREE.Sprite(material);
+	this.object.scale.normalize().multiplyScalar(50 * numNeighbors);
+	console.log(filepath, numNeighbors);
 	this.pos = this.object.position;
 	this.pos.set(Math.random() * 200, Math.random() * 200, Math.random() * 200);
 
-	this.textGeo = new THREE.TextGeometry(this.filepath);
-	this.label = new THREE.Mesh(this.textGeo, new THREE.MeshPhongMaterial({ color: 0x0 }));
-	this.label.position.set(this.pos.x, this.pos.y - 100, this.pos.z);
+	// this.textGeo = new THREE.TextGeometry(this.filepath);
+	// this.label = new THREE.Mesh(this.textGeo, new THREE.MeshPhongMaterial({ color: 0x0 }));
+	// this.label.position.set(this.pos.x, this.pos.y - 100, this.pos.z);
+
+	// var canvas = document.createElement('canvas');
+	// canvas.width = 1000;
+	// canvas.height = 100;
+
+	// var context = canvas.getContext('2d');
+	// context.fillStyle = 'yellow';
+	// context.fillRect(0, 0, 1000, 100);
+	// context.font = '24pt Arial';
+	// context.textAlign = 'center';
+	// context.textBaseline = 'middle';
+	// context.fillStyle = 'white';
+	// context.fillText(this.filepath, 0, 0);
+
+	// var texture = new THREE.Texture(canvas);
+	// texture.needsUpdate = true;
+	// this.label = new THREE.Sprite({
+	// 	map: texture,
+	// 	useScreenCoordinates: false
+	// });
+	
+	this.label = makeTextSprite(this.filepath, {
+		fontsize: 32,
+		fontface: "Arial",
+		borderColor: {
+			r:0, g:0, b:0, a:1.0
+		}
+	});
+
+	this.label.position.set(this.pos.x, this.pos.y, this.pos.z + 1);
+
+	// this.label.needsUpdate = true;
 
 	this.object.castShadow = true;
 	this.object.receiveShadow = true;
@@ -103,12 +139,13 @@ function Node(filepath) {
 Node.prototype.draw = function() {
 	// this.object.add(this.textBubble.mesh);
 	// scene.add(this.textBubble.mesh);
-	scene.add(this.object);
 	scene.add(this.label);
+	scene.add(this.object);
+	
 };
 
 Node.prototype.update = function() {
-	this.label.position.set(this.pos.x, this.pos.y - 100, this.pos.z);
+	this.label.position.set(this.pos.x, this.pos.y, this.pos.z + 1);
 	// this.label.quaternion.copy(camera.quaternion);
 	// this.textBubble.redraw(this.filepath);
 	// this.textBubble.scaleForDistance(zDistanceToCamera(this.object.position));
@@ -145,7 +182,11 @@ function Edge(startNode, endNode, weight) {
 	this.geometry.vertices.push(this.startNode.pos);
 	this.geometry.vertices.push(this.endNode.pos);
 
-	this.line = new THREE.Line( this.geometry, new THREE.LineBasicMaterial( { color: 0xffffff, opacity: 0.5 } ) );
+	this.line = new THREE.Line(this.geometry, new THREE.LineBasicMaterial({
+		linewidth: weight,
+		color: 0x000000,
+		opacity: 0.5
+	}));
 }
 
 Edge.prototype.update = function() {
@@ -180,8 +221,29 @@ document.addEventListener('mousemove', function(event){
 function init() {
 	var graph = createGraph();
 
+	var numNeighbors = {};
 	graph.nodes.forEach(function(n) {
-		nodes.push(new Node(n));
+		
+		var currEdges = graph.edges[n];
+
+		if (currEdges) {
+			Object.keys(currEdges).forEach(function(k) {
+				if (numNeighbors[k]) {
+					numNeighbors[k]++;
+					numNeighbors[n] = (numNeighbors[n]) ? numNeighbors[n] + 1 : 1;
+				} else {
+					numNeighbors[k] = 1;
+					numNeighbors[n] = (numNeighbors[n]) ? numNeighbors[n] + 1 : 1;
+				}
+			});
+		}
+	});
+
+	graph.nodes.forEach(function(n) {
+		if (!numNeighbors[n]) {
+			numNeighbors[n] = 0;
+		}
+		nodes.push(new Node(n, numNeighbors[n]));
 	});
 
 	for (var i in graph.nodes) {
@@ -458,6 +520,86 @@ function render() {
 
 	renderer.render( scene, camera );
 
+}
+
+function makeTextSprite( message, parameters ) {
+	if ( parameters === undefined ) parameters = {};
+	
+	var fontface = parameters.hasOwnProperty("fontface") ? 
+		parameters["fontface"] : "Arial";
+	
+	var fontsize = parameters.hasOwnProperty("fontsize") ? 
+		parameters["fontsize"] : 18;
+	
+	var borderThickness = parameters.hasOwnProperty("borderThickness") ? 
+		parameters["borderThickness"] : 1;
+	
+	var borderColor = parameters.hasOwnProperty("borderColor") ?
+		parameters["borderColor"] : { r:0, g:0, b:0, a:1.0 };
+	
+	var backgroundColor = parameters.hasOwnProperty("backgroundColor") ?
+		parameters["backgroundColor"] : { r:255, g:255, b:255, a:1.0 };
+
+	var spriteAlignment = THREE.SpriteMaterial.alignment;
+		
+	var canvas = document.createElement('canvas');
+	var context = canvas.getContext('2d');
+	console.log(context);
+	context.font = "Bold " + fontsize + "px " + fontface;
+    
+	// get size data (height depends only on font size)
+	var metrics = context.measureText( message );
+	var textWidth = metrics.width;
+	
+	// background color
+	context.fillStyle   = "rgba(" + backgroundColor.r + "," + backgroundColor.g + ","
+								  + backgroundColor.b + "," + backgroundColor.a + ")";
+	// border color
+	context.strokeStyle = "rgba(" + borderColor.r + "," + borderColor.g + ","
+								  + borderColor.b + "," + borderColor.a + ")";
+
+	context.lineWidth = borderThickness;
+	roundRect(context, borderThickness/2, borderThickness/2, textWidth + borderThickness, fontsize * 1.4 + borderThickness, 2);
+	// 1.4 is extra height factor for text below baseline: g,j,p,q.
+	
+	// text color
+	context.fillStyle = "rgba(0, 0, 0, 1.0)";
+
+	context.fillText( message, borderThickness, fontsize + borderThickness);
+	
+	// canvas contents will be used for a texture
+	var texture = new THREE.Texture(canvas) 
+	texture.needsUpdate = true;
+
+	var spriteMaterial = new THREE.SpriteMaterial( 
+		{ map: texture, useScreenCoordinates: false } );
+
+	// spriteMaterial.alignment.set(0, 0);
+
+	var sprite = new THREE.Sprite( spriteMaterial );
+
+	sprite.position.normalize();
+	sprite.scale.set(100, 50, 1.0);
+
+
+	return sprite;	
+}
+
+// function for drawing rounded rectangles
+function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x+r, y);
+    ctx.lineTo(x+w-r, y);
+    ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+    ctx.lineTo(x+w, y+h-r);
+    ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+    ctx.lineTo(x+r, y+h);
+    ctx.quadraticCurveTo(x, y+h, x, y+h-r);
+    ctx.lineTo(x, y+r);
+    ctx.quadraticCurveTo(x, y, x+r, y);
+    ctx.closePath();
+    ctx.fill();
+	ctx.stroke();   
 }
 
 // // MAIN
