@@ -1,37 +1,51 @@
-function createGraph() {
-	return {
-		nodes: ['my/file/path1', 'some/file/path2', 'random/file/path3', 'i/heart/three.js', 'we/have/node.js', 'meow/moo/roof.py', 'some/other/path7', 'put/moo.fj', 'cheetos/rule.js', 'some/long/long/long/random/path/woooo/meow.js'],
-		lineNums: [50, 200, 500, 10, 8, 300, 897, 150, 140, 120],
-		edges: {
-			'some/file/path2': {
-				'put/moo.fj': 30
-			},
-			'my/file/path1': {
-				'some/file/path2': 5,
-				'random/file/path3': 10,
-				'i/heart/three.js': 11
-			},
-			'i/heart/three.js': {
-				'meow/moo/roof.py': 2,
-				'we/have/node.js': 3,
-				'cheetos/rule.js': 16
-			},
-			'some/other/path7': {
-				'we/have/node.js': 15,
-				'some/file/path2': 12,
-				'put/moo.fj': 21,
-				'cheetos/rule.js': 30,
-				'some/long/long/long/random/path/woooo/meow.js': 1
-			},
-			'we/have/node.js': {
-				'some/file/path2': 12,
-				'put/moo.fj': 21,
-				'cheetos/rule.js': 30,
-				'some/long/long/long/random/path/woooo/meow.js': 1
-			}
-		}
-	};
-}
+// function createGraf() {
+	// return {
+	// 	nodes: ['my/file/path1', 'some/file/path2', 'random/file/path3', 'i/heart/three.js', 'we/have/node.js', 'meow/moo/roof.py', 'some/other/path7', 'put/moo.fj', 'cheetos/rule.js', 'some/long/long/long/random/path/woooo/meow.js'],
+	// 	lineNums: [50, 200, 500, 10, 8, 300, 897, 150, 140, 120],
+	// 	edges: {
+	// 		'some/file/path2': {
+	// 			'put/moo.fj': 30
+	// 		},
+	// 		'my/file/path1': {
+	// 			'some/file/path2': 5,
+	// 			'random/file/path3': 10,
+	// 			'i/heart/three.js': 11
+	// 		},
+	// 		'i/heart/three.js': {
+	// 			'meow/moo/roof.py': 2,
+	// 			'we/have/node.js': 3,
+	// 			'cheetos/rule.js': 16
+	// 		},
+	// 		'some/other/path7': {
+	// 			'we/have/node.js': 15,
+	// 			'some/file/path2': 12,
+	// 			'put/moo.fj': 21,
+	// 			'cheetos/rule.js': 30,
+	// 			'some/long/long/long/random/path/woooo/meow.js': 1
+	// 		},
+	// 		'we/have/node.js': {
+	// 			'some/file/path2': 12,
+	// 			'put/moo.fj': 21,
+	// 			'cheetos/rule.js': 30,
+	// 			'some/long/long/long/random/path/woooo/meow.js': 1
+	// 		}
+	// 	}
+	// };
+	// return {
+	// 	repo_link: 'https://github.com/codygibb/code-cache', 
+	// 	array: [{
+	// 		fullPath: '/foo/bar/baz.js',
+	// 		line_num: 50,
+	// 		neighbors: {
+	// 			'/bar/boo/moo.js': 5
+	// 		}
+	// 	}, {
+	// 		fullPath: '/bar/boo/moo.js',
+	// 		line_num: 100,
+	// 		neighbors: {}
+	// 	}]
+	// }
+// }
 
 function zDistanceToCamera(position) {
 	return camera.forward.dot(position.clone().sub(camera.position));
@@ -267,7 +281,18 @@ document.addEventListener('mousemove', function(event){
 })
 
 function init() {
-	var graph = createGraph();
+	// var graph = createGraph();
+	var graph = {
+		nodes: [],
+		lineNums: [],
+		edges: {}
+	}
+	var g = createGraf();
+	g.array.forEach(function(n) {
+		graph.nodes.push(n.fullPath);
+		graph.lineNums.push(n.line_num);
+		graph.edges[n.fullPath] = n.neighbors;
+	});
 
 	var numNeighbors = {};
 	graph.nodes.forEach(function(n) {
