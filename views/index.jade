@@ -4,7 +4,7 @@ html
         title Graf
         link(rel='stylesheet', href='/bower_components/bootstrap/dist/css/bootstrap.css')
         link(rel='stylesheet', href='/css/style.css')
-        script(src='/bower_components/pegjs/src/parser.pegjs')
+        script(src='/bower_components/jquery/dist/jquery.js')
         script(src='/js/index.js')
         
     body
@@ -15,5 +15,5 @@ html
                 br
                 form
                     .form-group
-                        input.form-control(placeholder='Enter public github repo URL')
-                    button.btn.btn-success.btn-block Visualize
+                        input#repoInput.form-control(placeholder='Enter public github repo URL')
+                    button#visualizeBtn.btn.btn-success.btn-block Visualize
