@@ -102,6 +102,7 @@ function Node(filepath, numNeighbors, lineNum) {
 	// this.object = new THREE.Mesh(this.geometry, new THREE.MeshLambertMaterial({ color: Math.random() * 0xffffff }));
 	
 	this.color = new THREE.Color();
+	this.numNeighbors = numNeighbors;
 
 	if (numNeighbors == 0) {
 		var red = 0;
@@ -214,12 +215,13 @@ Node.prototype.update = function() {
     var long = 0;
     var z = 1 - dz/2;
     for (var k = 0; k < n; ++k) {
-      var r = Math.sqrt(1-z*z)*150;
+    	// console.log(appearingNodes[k]);
+      var r = Math.sqrt(1-z*z)*75 * Math.sqrt(1+ appearingNodes[k].numNeighbors);
       var pos = appearingNodes[k].pos;
       pos.copy(centrePosition);
       pos.x += Math.cos(long)*r;
       pos.y += Math.sin(long)*r;
-      pos.z += z * 150;
+      pos.z += z * 75* Math.sqrt(1+appearingNodes[k].numNeighbors);
       z = z - dz;
       long = long + dlong;
     }
