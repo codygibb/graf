@@ -80,8 +80,8 @@ function Node(filepath, numNeighbors) {
 	var map = THREE.ImageUtils.loadTexture('../images/sprite.png');
 	var material = new THREE.SpriteMaterial({ map: map, color: this.color, fog: true, opacity: 0.9 });
 	this.object = new THREE.Sprite(material);
-	this.object.scale.normalize().multiplyScalar(50 * numNeighbors);
-	
+	this.object.scale.normalize().multiplyScalar(20 + 5 * numNeighbors);
+
 	// var material = new THREE.SpriteCanvasMaterial({
 	// 	color: 0x0,
 	// 	program: function(context) {
@@ -126,7 +126,7 @@ function Node(filepath, numNeighbors) {
 		fontsize: 32,
 		fontface: "Arial",
 		borderColor: {
-			r:0, g:0, b:0, a:1.0
+			r:255, g:255, b:255, a:1.0
 		}
 	});
 
@@ -196,9 +196,10 @@ function Edge(startNode, endNode, weight) {
 	this.geometry.vertices.push(this.endNode.pos);
 
 	this.line = new THREE.Line(this.geometry, new THREE.LineBasicMaterial({
-		linewidth: weight,
-		color: startNode.color,
-		opacity: 0.9
+		linewidth: weight * .9,
+		color: 0xffffff , 
+		opacity: 0.9,
+		transparent: true
 	}));
 }
 
@@ -282,7 +283,7 @@ function init() {
 	document.body.appendChild( container );
 	projector = new THREE.Projector();
 	camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 10000 );
-	camera.position.z = 1000;
+	camera.position.z = 500;
 	camera.forward = projector.unprojectVector(new THREE.Vector3(0, 0, 0.5), camera).sub(camera.position).normalize();
 
 	controls = new THREE.TrackballControls( camera );
@@ -295,7 +296,7 @@ function init() {
 	controls.dynamicDampingFactor = 0.3;
 
 	scene = new THREE.Scene();
-	scene.fog = new THREE.FogExp2( 0x000000, 0.001 );
+	scene.fog = new THREE.FogExp2( 0x000000, 0.002 );
 
 	scene.add( new THREE.AmbientLight( 0x505050 ) );
 
@@ -364,18 +365,18 @@ function init() {
 
 	
 
-	renderer = new THREE.WebGLRenderer( { antialias: true } );
-	renderer.setClearColor( 0x000000 );
-	renderer.setSize( window.innerWidth, window.innerHeight );
-	renderer.sortObjects = false;
-
-	renderer.shadowMapEnabled = true;
-	renderer.shadowMapType = THREE.PCFShadowMap;
-
 	// renderer = new THREE.WebGLRenderer( { antialias: true } );
+	// renderer.setClearColor( 0x000000 );
 	// renderer.setSize( window.innerWidth, window.innerHeight );
+	// renderer.sortObjects = false;
+
+	// renderer.shadowMapEnabled = true;
+	// renderer.shadowMapType = THREE.PCFShadowMap;
+
+	renderer = new THREE.WebGLRenderer( { antialias: false } );
+	renderer.setSize( window.innerWidth, window.innerHeight );
 	// renderer.setClearColor( 0xf0f0f0 );
-	// renderer.autoClear = false;
+	renderer.autoClear = false;
 
 	container.appendChild( renderer.domElement );
 
@@ -396,29 +397,27 @@ function init() {
 	renderer.domElement.addEventListener( 'mousedown', onDocumentMouseDown, false );
 	renderer.domElement.addEventListener( 'mouseup', onDocumentMouseUp, false );
 
+	var renderModel = new THREE.RenderPass( scene, camera );
+	var effectBloom = new THREE.BloomPass( .9 );
+	var effectCopy = new THREE.ShaderPass( THREE.CopyShader );
+
+	effectFXAA = new THREE.ShaderPass( THREE.FXAAShader );
+
+	var width = window.innerWidth || 2;
+	var height = window.innerHeight || 2;
+
+	effectFXAA.uniforms[ 'resolution' ].value.set( 1 / width, 1 / height );
+
+	effectCopy.renderToScreen = true;
+
+	composer = new THREE.EffectComposer( renderer );
+
+	composer.addPass( renderModel );
+	composer.addPass( effectFXAA );
+	composer.addPass( effectBloom );
+	composer.addPass( effectCopy );
+
 	window.addEventListener( 'resize', onWindowResize, false );
-
-	// var renderModel = new THREE.RenderPass( scene, camera );
-	// var effectBloom = new THREE.BloomPass( 1.3 );
-	// var effectCopy = new THREE.ShaderPass( THREE.CopyShader );
-
-	// effectFXAA = new THREE.ShaderPass( THREE.FXAAShader );
-
-	// var width = window.innerWidth || 2;
-	// var height = window.innerHeight || 2;
-
-	// effectFXAA.uniforms[ 'resolution' ].value.set( 1 / width, 1 / height );
-
-	// effectCopy.renderToScreen = true;
-
-	// composer = new THREE.EffectComposer( renderer );
-
-	// composer.addPass( renderModel );
-	// composer.addPass( effectFXAA );
-	// composer.addPass( effectBloom );
-	// composer.addPass( effectCopy );
-
-
 }
 
 function onWindowResize() {
@@ -427,8 +426,8 @@ function onWindowResize() {
 	camera.updateProjectionMatrix();
 
 	renderer.setSize( window.innerWidth, window.innerHeight );
-	// effectFXAA.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );	
-	// composer.reset();
+	effectFXAA.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );	
+	composer.reset();
 
 }
 
@@ -559,12 +558,14 @@ function render() {
 	// for(var i in edges) {
 	// 	edges[i].draw();
 	// }
+	// 
+	var time = Date.now() * 0.0005;
 
-	// camera.lookAt( scene.position ); 
+	camera.lookAt( scene.position ); 
 
-	renderer.render( scene, camera );
-	// renderer.clear();
-	// composer.render();
+	// renderer.render( scene, camera );
+	renderer.clear();
+	composer.render();
 
 }
 
@@ -584,7 +585,7 @@ function makeTextSprite( message, parameters ) {
 		parameters["borderColor"] : { r:0, g:0, b:0, a:1.0 };
 	
 	var backgroundColor = parameters.hasOwnProperty("backgroundColor") ?
-		parameters["backgroundColor"] : { r:255, g:255, b:255, a:1.0 };
+		parameters["backgroundColor"] : { r:0, g:0, b:0, a:1.0 };
 
 	var spriteAlignment = THREE.SpriteMaterial.alignment;
 		
@@ -609,7 +610,7 @@ function makeTextSprite( message, parameters ) {
 	// 1.4 is extra height factor for text below baseline: g,j,p,q.
 	
 	// text color
-	context.fillStyle = "rgba(0, 0, 0, 1.0)";
+	context.fillStyle = "rgba(255, 255, 255, 1.0)";
 
 	context.fillText( message, borderThickness, fontsize + borderThickness);
 	
