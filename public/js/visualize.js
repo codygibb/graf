@@ -37,8 +37,8 @@ init();
 animate();
 
 function init() {
-
-	container = $('#container');
+	container = document.createElement( 'div' );
+	document.body.appendChild( container );
 
 	camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 10000 );
 	camera.position.z = 1000;
@@ -115,7 +115,7 @@ function init() {
 	renderer.shadowMapEnabled = true;
 	renderer.shadowMapType = THREE.PCFShadowMap;
 
-	container.append( renderer.domElement );
+	container.appendChild( renderer.domElement );
 
 	// var info = $('body').append( 'div' );
 	// info.style.position = 'absolute';
@@ -128,7 +128,7 @@ function init() {
 	stats = new Stats();
 	stats.domElement.style.position = 'absolute';
 	stats.domElement.style.top = '0px';
-	container.append( stats.domElement );
+	container.appendChild( stats.domElement );
 
 	renderer.domElement.addEventListener( 'mousemove', onDocumentMouseMove, false );
 	renderer.domElement.addEventListener( 'mousedown', onDocumentMouseDown, false );
