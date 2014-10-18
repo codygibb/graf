@@ -68,19 +68,33 @@ var edges = [];
 
 // var dpGeometry = new THREE.PlaneGeometry(0.82, 0.82);
 
-
-
-
 function Node(filepath, numNeighbors) {
 	this.filepath = filepath;
 
 	// this.geometry = new THREE.SphereGeometry(100, 100, 100);
 	// this.object = new THREE.Mesh(this.geometry, new THREE.MeshLambertMaterial({ color: Math.random() * 0xffffff }));
-	var map = THREE.ImageUtils.loadTexture('../images/sea_otter.gif');
-	var material = new THREE.SpriteMaterial({ map: map, color: 0xffffff, fog: true });
+	
+	this.color = new THREE.Color();
+	this.color.setRGB(Math.random() * 255, Math.random() * 255, Math.random() * 255);
+
+	var map = THREE.ImageUtils.loadTexture('../images/sprite.png');
+	var material = new THREE.SpriteMaterial({ map: map, color: this.color, fog: true, opacity: 0.9 });
 	this.object = new THREE.Sprite(material);
 	this.object.scale.normalize().multiplyScalar(50 * numNeighbors);
+	
+	// var material = new THREE.SpriteCanvasMaterial({
+	// 	color: 0x0,
+	// 	program: function(context) {
+	// 		context.beginPath();
+	// 		context.arc(0, 0, 0.5, 0, Math.PI * 2, true);
+	// 		context.fill();
+	// 	}
+	// });
+	// this.object = new THREE.Sprite(material);
+	// this.object.scale.normalize().multiplyScalar(50 * numNeighbors);
+
 	console.log(filepath, numNeighbors);
+
 	this.pos = this.object.position;
 	this.pos.set(Math.random() * 200, Math.random() * 200, Math.random() * 200);
 
@@ -151,25 +165,24 @@ Node.prototype.update = function() {
 	// this.textBubble.scaleForDistance(zDistanceToCamera(this.object.position));
 }
 
-// function positionAppearingNodes(appearingNodes, centrePosition) {
-//     // Space the new nodes to be shown around this node
-//     var n = appearingNodes.length;
-//     // console.log(appearingNodes);
-//     var dlong = Math.PI*(3-Math.sqrt(5));
-//     var dz = 2.0/n;
-//     var long = 0;
-//     var z = 1 - dz/2;
-//     for (var k = 0; k < n; ++k) {
-//     	var r = Math.sqrt(1-z*z);
-//     	var pos = appearingNodes[k].object.position;
-//     	pos.copy(centrePosition);
-//     	pos.x += Math.cos(long)*r;
-//     	pos.y += Math.sin(long)*r;
-//     	pos.z += z;
-//     	z = z - dz;
-//     	long = long + dlong;
-//     }
-// }
+  function positionAppearingNodes(appearingNodes, centrePosition) {
+    // Space the new nodes to be shown around this node
+    var n = appearingNodes.length;
+    var dlong = Math.PI*(3-Math.sqrt(5));
+    var dz = 2.0/n;
+    var long = 0;
+    var z = 1 - dz/2;
+    for (var k = 0; k < n; ++k) {
+      var r = Math.sqrt(1-z*z)*150;
+      var pos = appearingNodes[k].pos;
+      pos.copy(centrePosition);
+      pos.x += Math.cos(long)*r;
+      pos.y += Math.sin(long)*r;
+      pos.z += z * 150;
+      z = z - dz;
+      long = long + dlong;
+    }
+  }
 
 function Edge(startNode, endNode, weight) {
 	edges.push(this);
@@ -184,8 +197,8 @@ function Edge(startNode, endNode, weight) {
 
 	this.line = new THREE.Line(this.geometry, new THREE.LineBasicMaterial({
 		linewidth: weight,
-		color: 0x000000,
-		opacity: 0.5
+		color: startNode.color,
+		opacity: 0.9
 	}));
 }
 
@@ -206,6 +219,8 @@ var container, stats;
 var camera, controls, scene, projector, renderer;
 var plane;
 var objects = [];
+var effectFXAA;
+var composer;
 
 var mouse = new THREE.Vector2(),
 offset = new THREE.Vector3(),
@@ -341,7 +356,7 @@ function init() {
 	for(var i in edges) {
 		edges[i].draw();
 	}
-	// positionAppearingNodes(nodes, new THREE.Vector3(0, 0, 0));
+	positionAppearingNodes(nodes , new THREE.Vector3(0, 0, 0));
 
 	plane = new THREE.Mesh( new THREE.PlaneGeometry( 2000, 2000, 8, 8 ), new THREE.MeshBasicMaterial( { color: 0x000000, opacity: 0.25, transparent: true, wireframe: true } ) );
 	plane.visible = false;
@@ -350,12 +365,17 @@ function init() {
 	
 
 	renderer = new THREE.WebGLRenderer( { antialias: true } );
-	renderer.setClearColor( 0xf0f0f0 );
+	renderer.setClearColor( 0x000000 );
 	renderer.setSize( window.innerWidth, window.innerHeight );
 	renderer.sortObjects = false;
 
 	renderer.shadowMapEnabled = true;
 	renderer.shadowMapType = THREE.PCFShadowMap;
+
+	// renderer = new THREE.WebGLRenderer( { antialias: true } );
+	// renderer.setSize( window.innerWidth, window.innerHeight );
+	// renderer.setClearColor( 0xf0f0f0 );
+	// renderer.autoClear = false;
 
 	container.appendChild( renderer.domElement );
 
@@ -378,6 +398,27 @@ function init() {
 
 	window.addEventListener( 'resize', onWindowResize, false );
 
+	// var renderModel = new THREE.RenderPass( scene, camera );
+	// var effectBloom = new THREE.BloomPass( 1.3 );
+	// var effectCopy = new THREE.ShaderPass( THREE.CopyShader );
+
+	// effectFXAA = new THREE.ShaderPass( THREE.FXAAShader );
+
+	// var width = window.innerWidth || 2;
+	// var height = window.innerHeight || 2;
+
+	// effectFXAA.uniforms[ 'resolution' ].value.set( 1 / width, 1 / height );
+
+	// effectCopy.renderToScreen = true;
+
+	// composer = new THREE.EffectComposer( renderer );
+
+	// composer.addPass( renderModel );
+	// composer.addPass( effectFXAA );
+	// composer.addPass( effectBloom );
+	// composer.addPass( effectCopy );
+
+
 }
 
 function onWindowResize() {
@@ -386,11 +427,12 @@ function onWindowResize() {
 	camera.updateProjectionMatrix();
 
 	renderer.setSize( window.innerWidth, window.innerHeight );
+	// effectFXAA.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );	
+	// composer.reset();
 
 }
 
 function onDocumentMouseMove( event ) {
-
 	event.preventDefault();
 
 	mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
@@ -508,6 +550,8 @@ function render() {
 		edges[i].update();
 	}
 
+	// camera.lookAt(scene.position);
+
 	// for (var i in nodes) {
 		
 	// 	nodes[i].draw();
@@ -519,6 +563,8 @@ function render() {
 	// camera.lookAt( scene.position ); 
 
 	renderer.render( scene, camera );
+	// renderer.clear();
+	// composer.render();
 
 }
 
