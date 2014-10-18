@@ -4,46 +4,168 @@ var when = require('when');
 var node_fn = require('when/node');
 var request = require('request');
 var requestP = node_fn.lift(request);
-var curl = require('node-curl');
 var unzip = require('unzip');
-var http = require('http');
-var AdmZip = require('adm-zip');
-var mkdirp = require('mkdirp');
-var BufferJoiner = require('bufferjoiner');
+var path = require('path');
+
+var graf_array = [];
+var path_set = [];
+
+function cleanGraph() {
+	for (var i = 0; i < graf_array.length; i++) {
+		Object.keys(graf_array[i].neighbors).forEach(function(path) {
+			if (path_set.indexOf(path) < 0) {
+				console.log(path);
+				delete graf_array[i].neighbors[path];
+			}
+		});
+	}
+}
+
+function process(data, fileName) {
+	if (typeof fileName != 'string') {
+		return;
+	}
+	lines = data.split("\n");
+	module_path_map = identifyModules(lines, fileName); // var name - full_path
+	module_counts = measureModuleUsage(lines, module_path_map); // fullPath - counts
+	console.log(module_counts);
+
+	module_object = {
+		"fullPath": fileName,
+		"line_num": lines.length,
+		"neighbors": module_counts
+	};
+
+	path_set.push(fileName);
+	graf_array.push(module_object);
+}
 
 
-// var GitHubApi = require('github');
+function identifyModules(lines, fileName) {
 
-var testUrl = 'https://github.com/codygibb/code-cache';
+	var rx = new RegExp(/[_A-Za-z][_A-Za-z0-9]*[ \t]*=[ \t]*require\(["'].+["']\)/);
 
-var tempZipFilePath = './tmp/' + new Date().getTime() + Math.random();
+	module_path_map = {};  // maps module abrev to module path
 
-request({
-	url: testUrl + '/archive/master.zip',
-	method: 'GET'
-})
-.pipe(unzip.Parse())
-.on('entry', function (entry) {
-    var fileName = entry.path;
-    var type = entry.type; // 'Directory' or 'File'
-    var size = entry.size;
-    // console.log(fileName, type, size);
-    if (fileName.slice(-3) == '.js') {
-    	// var bf = new BufferJoiner();
-    	var data = '';
-    	entry.on('data', function(chunk) {
-    		// bf.add(new Buffer(chunk));
-    		data += chunk;
-    	});
-    	entry.on('end', function() {
-    		console.log(data);
-    		// console.log(bf);
-    	});
-      // entry.pipe(fs.createWriteStream('output/path'));
-    } else {
-      entry.autodrain();
-    }
-  });
+	lines.forEach(function(line) {
+		
+		if (rx.test(line)) {
+			console.log(line);
+			var array = line.split('=');
+
+			var right = array[1];
+			var rel_path = "";
+			if (right.indexOf('\'') > -1) {
+				rel_path = right.split('\'')[1];
+			} else { // contains ""
+				rel_path = right.split('\"')[1];
+			}
+		
+			var dirname = path.dirname(fileName);
+			var fullPath = path.resolve(dirname, rel_path).replace(__dirname + '/', '');
+			fullPath = fullPath + '.js';
+
+
+			left = array[0].trim();
+			left_array = left.split(/[ \t]+/);
+			if (left_array.length == 1) {
+				module_path_map[left_array[0]] = fullPath;
+			} else {
+				module_path_map[left_array[1]] = fullPath;
+			}
+		}
+
+	});
+	return module_path_map;
+}
+
+function measureModuleUsage(lines, modules) {
+	module_count = {};
+	var rx_string  = "(^NAME\.|[=+\*\/\\(\[\{\-]{1}NAME\.)";
+	for (var i = 0; i < lines.length; i++) {
+		line = lines[i].replace(/\s/g, '');
+		Object.keys(modules).forEach(function(module) {
+			var rx = new RegExp(rx_string.split("NAME").join(module));
+			if (rx.test(line)) {
+				if (module in module_count) {
+					module_count[modules[module]]++;
+				} else {
+					module_count[modules[module]] = 1;
+				}
+			}
+		});
+	}
+	return module_count;
+}
+
+// function parse_file(data) {
+// 	// first discover modules
+// 	var modules = {}  // map module abreviation to full path
+
+// 	// count occurances of those models in the file
+// 	var module_counts = {};  // mapping module abreviation to count
+// 	var lines = data.split('/n');
+
+// 	var rx_string  = /(^NAME\.|[=+\*\/\\(\[\{\-]{1}NAME\.)/;
+// 	for (var i = 0; i < lines.length(); i++) {
+// 		line = lines[i].replace(/ /g, '');
+// 		for each module in modules.keys() {}
+// 			var rx = new RegExp(rx_string.split("NAME").join(module));
+// 			if (rx.test(line)) {
+// 				if (module in module_counts) {
+// 					modules[module]++;
+// 				} else {
+// 					modules[module] = 1;
+// 				}
+// 			}
+// 		}
+// 	}
+// 	console.log()
+// };
+
+//var url = 'https://github.com/codygibb/code-cache';
+var url = 'https://github.com/ryanewing/PubStar';
+
+//function buildGraf(url) {
+	var tempZipFilePath = './tmp/' + new Date().getTime() + Math.random();
+
+	request({
+		url: url + '/archive/master.zip',
+		method: 'GET'
+	})
+	.pipe(unzip.Parse())
+	.on('entry', function (entry) {
+	    var fileName = entry.path;
+	    var type = entry.type; // 'Directory' or 'File'
+	    var size = entry.size;
+	    if (fileName.slice(-3) == '.js' && (fileName.length < 7 || fileName.slice(-7) != '-min.js')) {
+		    // exclude min.js and makes sure we only check files >7 chars
+			var data = '';
+			//console.log(fileName);
+			// var required = '../../mymodule.js';
+			// var requiredPath = path.normalize(path.dirname(fileName) + '/' + required);
+			entry.on('data', function(chunk) {
+				data += chunk;
+			});
+			entry.on('end', function() {
+				process(data, fileName);
+			});
+	    } else {
+	      entry.autodrain();
+	    }
+	  })
+	.on('close', function() {
+		//console.log("yay");
+		
+		cleanGraph();
+		console.log(graf_array);
+		var graf = {
+			"repo_link": url,
+			"array": graf_array
+		}
+		return graf;
+	});
+//}
 
 // , function(err, res, body) {
 // 	console.log(body);
