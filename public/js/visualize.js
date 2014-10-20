@@ -96,7 +96,9 @@ var maxNeighbors = 1;
 // var dpGeometry = new THREE.PlaneGeometry(0.82, 0.82);
 
 function Node(filepath, numNeighbors, lineNum) {
+	var slashIndex = filepath.indexOf('/');
 	this.filepath = filepath;
+	this.displayPath = filepath.slice(slashIndex + 1);
 
 	// this.geometry = new THREE.SphereGeometry(100, 100, 100);
 	// this.object = new THREE.Mesh(this.geometry, new THREE.MeshLambertMaterial({ color: Math.random() * 0xffffff }));
@@ -162,7 +164,7 @@ function Node(filepath, numNeighbors, lineNum) {
 	// 	useScreenCoordinates: false
 	// });
 	
-	this.label = makeTextSprite(this.filepath, {
+	this.label = makeTextSprite(this.displayPath, {
 		fontsize: 18,
 		fontface: "Arial",
 		borderColor: {
@@ -195,13 +197,15 @@ function Node(filepath, numNeighbors, lineNum) {
 Node.prototype.draw = function() {
 	// this.object.add(this.textBubble.mesh);
 	// scene.add(this.textBubble.mesh);
-	scene.add(this.label);
-	scene.add(this.object);
+	if (this.numNeighbors > 0) {
+		scene.add(this.object);
+		scene.add(this.label);
+	}
 	
 };
 
 Node.prototype.update = function() {
-	this.label.position.set(this.pos.x, this.pos.y, this.pos.z + 1);
+	this.label.position.set(this.pos.x + 2, this.pos.y + 2, this.pos.z + 2);
 	// this.label.quaternion.copy(camera.quaternion);
 	// this.textBubble.redraw(this.filepath);
 	// this.textBubble.scaleForDistance(zDistanceToCamera(this.object.position));
@@ -233,36 +237,57 @@ function Edge(startNode, endNode, weight) {
 	this.endNode = endNode;
 	this.weight = weight;
 
-	this.geometry = new THREE.Geometry();
+	// this.geometry = new THREE.Geometry();
 
-	this.geometry.vertices.push(this.startNode.pos);
-	this.geometry.vertices.push(this.endNode.pos);
+	// this.geometry.vertices.push(this.startNode.pos);
+	// this.geometry.vertices.push(this.endNode.pos);
 
 	// var geometry = new THREE.CylinderGeometry( 0, 10, 100, 3 );
 	// var material = new THREE.MeshBasicMaterial( { color: 0xffffff , opacity: 0.8, ransparent: true, shading: THREE.FlatShading});
 	
 	// this.line = new THREE.Mesh( geometry, material );
 
-	this.line = new THREE.Line(this.geometry, new THREE.LineBasicMaterial({
-		linewidth: 1 + 2 * Math.sqrt(weight * 1.1),
-		color: 0xffffff , 
-		opacity: 0.4,
-		transparent: true, 
-		shading: THREE.SmoothShading
-	}));
+	// this.line = new THREE.Line(this.geometry, new THREE.LineBasicMaterial({
+	// 	linewidth: 1 + 2 * Math.sqrt(weight * 1.1),
+	// 	color: 0xffffff , 
+	// 	opacity: 0.4,
+	// 	transparent: true, 
+	// 	shading: THREE.SmoothShading
+	// }));
+	this.setArrow = function() {
+		var dir = new THREE.Vector3();
+		dir.subVectors(this.endNode.object.position, this.startNode.object.position).normalize();
+		// var dir = this.endNode.pos;
+		var origin = this.startNode.object.position;
+		var length = Math.abs(this.startNode.object.position.distanceTo(this.endNode.object.position));
+		var hex = 0x777777;
+		// console.log('dir:', dir.x, dir.y, dir.z, 'origin:', origin.x, origin.y, origin.z, 'length:', length)
+		var arrowHelper = new THREE.ArrowHelper( dir, origin, length, hex, 30, 1 + 2 * Math.sqrt(weight * 1.1));
+		this.arrow = arrowHelper;
+	};
+
+	this.setArrow();
 }
 
 Edge.prototype.update = function() {
-	this.geometry.vertices[0] = this.startNode.pos;
-	this.geometry.vertices[1] = this.endNode.pos;
+	// this.geometry.vertices[0] = this.startNode.pos;
+	// this.geometry.vertices[1] = this.endNode.pos;
+	scene.remove(this.arrow);
+	this.setArrow();
+	this.arrow.line.geometry.verticesNeedUpdate = true;
+	this.arrow.cone.geometry.verticesNeedUpdate = true;
+	scene.add(this.arrow);
+	// this.arrow.line.geometry.vertices[0] = this.startNode.pos;
+	// this.arrow.line.geometry.vertices[1] = this.endNode.pos;
 
-	this.geometry.verticesNeedUpdate = true;
+	// this.arrow.line.geometry.verticesNeedUpdate = true;
 
 	// this.line = new THREE.Line( geometry, new THREE.LineBasicMaterial( { color: 0xffffff, opacity: 0.5 } ) );
 }
 
 Edge.prototype.draw = function() {
-	scene.add(this.line);
+	this.setArrow();
+	// scene.add(this.arrow);
 }
 
 var container, stats;
@@ -552,8 +577,9 @@ function onDocumentMouseMove( event ) {
 
 	var vector = new THREE.Vector3( mouse.x, mouse.y, 0.5 );
 	projector.unprojectVector( vector, camera );
+	vector.sub( camera.position ).normalize();
 
-	var raycaster = new THREE.Raycaster( camera.position, vector.sub( camera.position ).normalize() );
+	var raycaster = new THREE.Raycaster( camera.position, vector );
 
 
 	if ( SELECTED ) {
@@ -908,7 +934,6 @@ function makeTextSprite( message, parameters, yAdjust ) {
 
 	sprite.position.normalize();
 	sprite.scale.set(100, 50, 1.0);
-
 
 	return sprite;	
 }

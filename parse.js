@@ -160,7 +160,7 @@ var parseCtrl = {
 		      entry.autodrain();
 		    }
 		  })
-		.on('close', function() {
+		.once('close', function() {
 			//console.log("yay");
 			
 			cleanGraph(graf_array, path_set);
@@ -172,7 +172,7 @@ var parseCtrl = {
 			}
 			res.json(graf);
 		})
-		.on('error', function(err) {
+		.once('error', function(err) {
 			console.log(err);
 			res.status(500).send('some random error');
 		});
