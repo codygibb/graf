@@ -66,6 +66,10 @@ function identifyModules(lines, fileName) {
 			}
 		
 			var dirname = path.dirname(fileName);
+			if (!dirname || !rel_path) {
+				console.log('bad split');
+				return;
+			}
 			var fullPath = path.resolve(dirname, rel_path).replace(__dirname + '/', '');
 			fullPath = fullPath + '.js';
 
