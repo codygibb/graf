@@ -14,6 +14,7 @@ body {
 	-o-background-size: cover;
 	background-size: cover;
 	background-image: url('http://androidcentral.us/wp-content/uploads/2014/06/low-poly-texture-18.png');
+	color: white;
 }
 
 a {
@@ -35,10 +36,18 @@ a {
 	text-align: center;
 }
 
-#title {
+p > small {
+	font-size: 10pt;
+}
+
+#status {
+	font-size: 12pt;
+}
+
+/*#title {
 	color: white;
 }
 
-#thinking {
+#status {
 	color: white;
-}
+}*/

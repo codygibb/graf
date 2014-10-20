@@ -244,9 +244,9 @@ function Edge(startNode, endNode, weight) {
 	// this.line = new THREE.Mesh( geometry, material );
 
 	this.line = new THREE.Line(this.geometry, new THREE.LineBasicMaterial({
-		linewidth: Math.sqrt(weight * 1.1),
+		linewidth: 1 + 2 * Math.sqrt(weight * 1.1),
 		color: 0xffffff , 
-		opacity: 0.8,
+		opacity: 0.4,
 		transparent: true, 
 		shading: THREE.SmoothShading
 	}));
@@ -302,7 +302,13 @@ function init() {
 		edges: {}
 	}
 
-	var GRAF = JSON.parse(localStorage.getItem('GRAF'));
+
+	var storageGraf = localStorage.getItem('GRAF')
+	if (!storageGraf) {
+		window.location = '/';
+		return;
+	}
+	var GRAF = JSON.parse(storageGraf);
 	localStorage.removeItem('GRAF');
 
 	// console.log(GRAF);
@@ -846,14 +852,14 @@ function makeTextSprite( message, parameters, yAdjust ) {
 		canvas.width += 200;
 		// 
 	}
-	if (yAdjust > canvas.height) {
+	if (yAdjust > 80) {
 		canvas.height += yAdjust;
 	}
 	// console.log(yAdjust);
 	// canvas.width = canvas.width;
 	// console.log(canvas);
 	
-	context.font = "Bold " + fontsize + "px " + fontface;
+	context.font = fontsize + "px " + fontface;
 	// get size data (height depends only on font size)
 	var metrics = context.measureText( message );
 	var textWidth = metrics.width;

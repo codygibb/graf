@@ -14,7 +14,7 @@ function cleanGraph(graf_array, path_set) {
 		if (graf_array[i].neighbors) {
 			Object.keys(graf_array[i].neighbors).forEach(function(path) {
 				if (path_set.indexOf(path) < 0) {
-					console.log(path);
+					// console.log(path);
 					delete graf_array[i].neighbors[path];
 				}
 			});
@@ -29,7 +29,7 @@ function process(data, fileName, graf_array, path_set) {
 	lines = data.split("\n");
 	module_path_map = identifyModules(lines, fileName); // var name - full_path
 	module_counts = measureModuleUsage(lines, module_path_map); // fullPath - counts
-	console.log(module_counts);
+	// console.log(module_counts);
 
 	module_object = {
 		"fullPath": fileName,
@@ -51,7 +51,7 @@ function identifyModules(lines, fileName) {
 	lines.forEach(function(line) {
 		
 		if (rx.test(line)) {
-			console.log(line);
+			// console.log(line);
 			var array = line.split('=');
 
 			var right = array[1];
@@ -164,13 +164,17 @@ var parseCtrl = {
 			//console.log("yay");
 			
 			cleanGraph(graf_array, path_set);
-			console.log(graf_array, path_set);
+			// console.log(graf_array, path_set);
 
 			var graf = {
 				"repo_link": url,
 				"array": graf_array
 			}
 			res.json(graf);
+		})
+		.on('error', function(err) {
+			console.log(err);
+			res.status(500).send('some random error');
 		});
 	}
 };
