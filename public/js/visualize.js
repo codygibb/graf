@@ -93,12 +93,14 @@ function zDistanceToCamera(position) {
 var nodes = [];
 var edges = [];
 var maxNeighbors = 1;
+var maxReferences = 1;
 // var dpGeometry = new THREE.PlaneGeometry(0.82, 0.82);
 
-function Node(filepath, numNeighbors, lineNum) {
+function Node(filepath, numNeighbors, lineNum, connections) {
 	var slashIndex = filepath.indexOf('/');
 	this.filepath = filepath;
 	this.displayPath = filepath.slice(slashIndex + 1);
+	this.connections = connections;
 
 	// this.geometry = new THREE.SphereGeometry(100, 100, 100);
 	// this.object = new THREE.Mesh(this.geometry, new THREE.MeshLambertMaterial({ color: Math.random() * 0xffffff }));
@@ -197,7 +199,7 @@ function Node(filepath, numNeighbors, lineNum) {
 Node.prototype.draw = function() {
 	// this.object.add(this.textBubble.mesh);
 	// scene.add(this.textBubble.mesh);
-	if (this.numNeighbors > 0) {
+	if (this.connections > 0) {
 		scene.add(this.object);
 		scene.add(this.label);
 	}
@@ -260,9 +262,14 @@ function Edge(startNode, endNode, weight) {
 		// var dir = this.endNode.pos;
 		var origin = this.startNode.object.position;
 		var length = Math.abs(this.startNode.object.position.distanceTo(this.endNode.object.position));
+		// var thickness = 2 * Math.sqrt(weight * 1.5);
+		// console.log(maxReferences);
+		// var val = thickness / maxReferences;
+		// var color = new THREE.Color(val, val, val);
+		// var hex = color.getHex();
 		var hex = 0x777777;
 		// console.log('dir:', dir.x, dir.y, dir.z, 'origin:', origin.x, origin.y, origin.z, 'length:', length)
-		var arrowHelper = new THREE.ArrowHelper( dir, origin, length, hex, 30, 1 + 2 * Math.sqrt(weight * 1.1));
+		var arrowHelper = new THREE.ArrowHelper( dir, origin, length, hex, 30);
 		this.arrow = arrowHelper;
 	};
 
@@ -324,6 +331,7 @@ function init() {
 	graph = {
 		nodes: [],
 		lineNums: [],
+		connections: [],
 		edges: {}
 	}
 
@@ -342,10 +350,13 @@ function init() {
 	GRAF.array.forEach(function(n) {
 		graph.nodes.push(n.fullPath);
 		graph.lineNums.push(n.line_num);
+		graph.connections.push(n.fullDependencyCount);
 		if (!$.isEmptyObject(n.neighbors)) {
 			graph.edges[n.fullPath] = n.neighbors;
 		}
 	});
+
+	console.log(graph);
 
 	// console.log(graph);
 
@@ -356,6 +367,9 @@ function init() {
 
 		if (currEdges) {
 			Object.keys(currEdges).forEach(function(k) {
+				var refs = currEdges[k];
+				maxReferences = Math.max(maxReferences, refs);
+
 				if (numNeighbors[k]) {
 					numNeighbors[k]++;
 					numNeighbors[n] = (numNeighbors[n]) ? numNeighbors[n] + 1 : 1;
@@ -374,7 +388,7 @@ function init() {
 		if (!numNeighbors[n]) {
 			numNeighbors[n] = 0;
 		}
-		nodes.push(new Node(n, numNeighbors[n], graph.lineNums[i]));
+		nodes.push(new Node(n, numNeighbors[n], graph.lineNums[i], graph.connections[i]));
 		i++;
 	});
 

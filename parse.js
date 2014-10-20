@@ -12,12 +12,15 @@ var path = require('path');
 function cleanGraph(graf_array, path_set) {
 	for (var i = 0; i < graf_array.length; i++) {
 		if (graf_array[i].neighbors) {
+			var count = 0;
 			Object.keys(graf_array[i].neighbors).forEach(function(path) {
 				if (path_set.indexOf(path) < 0) {
 					// console.log(path);
 					delete graf_array[i].neighbors[path];
 				}
+				count++;
 			});
+			graf_array[i].fullDependencyCount = count;
 		}
 	}
 }
