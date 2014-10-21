@@ -67,7 +67,7 @@ function identifyModules(lines, fileName) {
 		
 			var dirname = path.dirname(fileName);
 			if (!dirname || !rel_path) {
-				console.log('bad split');
+				console.log('bad split:', line);
 				return;
 			}
 			var fullPath = path.resolve(dirname, rel_path).replace(__dirname + '/', '');
@@ -160,13 +160,22 @@ var parseCtrl = {
 				entry.on('data', function(chunk) {
 					data += chunk;
 				});
-				entry.on('end', function() {
+				entry.once('error', function(err) {
+					console.log('entry error:', err);
+					res.status(500).send('some entry error');
+					entry.end();
+				});
+				entry.once('end', function() {
 					process(data, fileName, graf_array, path_set);
 				});
 		    } else {
 		      entry.autodrain();
 		    }
-		  })
+		})
+		.once('error', function(err) {
+			console.log('zip error:', err);
+			res.status(500).send('some random error');
+		})
 		.once('close', function() {
 			//console.log("yay");
 			
@@ -178,10 +187,6 @@ var parseCtrl = {
 				"array": graf_array
 			}
 			res.json(graf);
-		})
-		.once('error', function(err) {
-			console.log(err);
-			res.status(500).send('some random error');
 		});
 	}
 };
