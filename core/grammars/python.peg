@@ -1,0 +1,11 @@
+program = import_stmt*
+import_stmt = _ (import_name / import_from) _
+import_name = "import" _ dotted_as_names
+import_from = "from" _ (("."* dotted_name) / "."+) _ "import" _ ("*" / ("(" import_as_names ")") / import_as_names)
+import_as_name = name (_ "as" _ name)?
+dotted_as_name = dotted_name (_ "as" _ name)?
+import_as_names = import_as_name (_ "," _ import_as_name)* (_ "," _)?
+dotted_as_names = dotted_as_name (_ "," _ dotted_as_name)*
+dotted_name = name (_ "." _ name)*
+name = ~"(_|[a-zA-Z])[_a-zA-Z0-9]*"
+_ = ~"(\s)*"
