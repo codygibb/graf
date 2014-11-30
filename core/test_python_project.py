@@ -1,6 +1,7 @@
 import unittest
-from core.parse import PythonProject
-# from core.parse import PythonProject
+from core.parse import PythonProject, ModuleNode, PackageNode
+
+unittest.TestCase.maxDiff = None
 
 class TestPythonProject(unittest.TestCase):
 	"""
@@ -27,6 +28,7 @@ class TestPythonProject(unittest.TestCase):
 	def setUp(self):
 		self.py_project = PythonProject()
 
+	@unittest.skip('')
 	def test_normalize_import(self):
 		fpath = 'my_project/packageA/module1.py'
 
@@ -46,59 +48,113 @@ class TestPythonProject(unittest.TestCase):
 		res = self.py_project._normalize_import(fpath, name)
 		self.assertEqual(res, 'my_project.packageC.module4')
 
-	# IMPORT_NAME TESTS
+	def test_simple_IMPORT_NAME_build_dependency_tree(self):
+		fcontents = self._build_simple_IMPORT_NAME_project()
+		self._simple_dependency_tree_check(fcontents)
 
-	def test_simple_import_name_register_dependencies(self):
-		fcontents = self._build_simple_import_name_project()
-		self._simple_register_deps_check(fcontents)
+	def test_simple_IMPORT_FROM_build_dependency_tree(self):
+		fcontents = self._build_simple_IMPORT_FROM_project()
+		self._simple_dependency_tree_check(fcontents)
 
-	def test_simple_import_name_build_dependency_tree(self):
-		fcontents = self._build_simple_import_name_project()
-		self._shallow_simple_dependency_tree_check(fcontents)
-	
+	def test_simple_RELATIVE_IMPORTS_project(self):
+		fcontents = self._build_simple_RELATIVE_IMPORTS_project()
+		self._simple_dependency_tree_check(fcontents)
+
 	# PRIVATE HELPER METHODS
 	
-	def _simple_register_deps_check(self, fcontents):
-		package_folders = {'project', 'project.packageA', 'project.packageB', 'project.packageB.packageC'}
-		dep_map = {
-			'project.module0': ['project.packageA.module1'],
-			'project.packageA.module1': ['project.packageA.module2'],
-			'project.packageA.module2': [],
-			'project.packageB.module3': ['project.packageA', 'project.packageB.packageC'],
-			'project.packageB.packageC.module4': ['project.module0']
-		}
-		self._register_project_deps(fcontents)
-		self.assertSetEqual(package_folders, self.py_project._package_folders)
-		self.assertDictEqual(dep_map, self.py_project._dep_map)
-	
-	def _shallow_simple_dependency_tree_check(self, fcontents):
+	def _simple_dependency_tree_check(self, fcontents):
+		project = PackageNode('project')
+		m0 = ModuleNode('module0')
+		pA = PackageNode('packageA')
+		m1 = ModuleNode('module1')
+		m2 = ModuleNode('module2')
+		pB = PackageNode('packageB')
+		m3 = ModuleNode('module3')
+		pC = PackageNode('packageC')
+		m4 = ModuleNode('module4')
+
+		project.sub_packages = [pA, pB]
+		project.sub_modules = [m0]
+
+		m0.package_deps = []
+		m0.module_deps = [m1]
+
+		pA.sub_packages = []
+		pA.sub_modules = [m1, m2]
+
+		m1.package_deps = []
+		m1.module_deps = [m2]
+
+		m2.package_deps = []
+		m2.module_deps = []
+
+		pB.sub_packages = [pC]
+		pB.sub_modules = [m3]
+
+		m3.package_deps = [pC]
+		m3.module_deps = [m1, m2]
+
+		pC.sub_packages = []
+		pC.sub_modules = [m4]
+
+		m4.package_deps = []
+		m4.module_deps = [m0]
+
+		expected_roots = [project]
+
 		self._register_project_deps(fcontents)
 		roots = self.py_project.build_dependency_tree()
 
-		self.assertEqual(len(roots), 1)
-		self.assertEqual(roots[0].name, 'project')
+		self.assertItemsEqual(roots, expected_roots)
 
-		self.assertEqual(len(roots[0].sub_packages), 2)
-		self.assertEqual(len(roots[0].sub_modules), 1)
-
-		self.assertEqual(len(roots[0].sub_modules[0].module_deps), 1)
-		self.assertEqual(roots[0].sub_modules[0].module_deps[0].name, 'module1')
-		self.assertEqual(roots[0].sub_modules[0].module_deps[0].module_deps[0].name, 'module2')
-
-	def _build_simple_import_name_project(self):
+	def _build_simple_IMPORT_NAME_project(self):
 		fcontents = {}
 		fcontents['project/__init__.py'] = ''
-		fcontents['project/module0.py'] = 'import project.packageA.module1'
+		fcontents['project/module0.py'] = 'import project.packageA.module1 as m1'
 
 		fcontents['project/packageA/__init__.py'] = ''
 		fcontents['project/packageA/module1.py'] = 'import project.packageA.module2'
 		fcontents['project/packageA/module2.py'] = ''
 
 		fcontents['project/packageB/__init__.py'] = ''
-		fcontents['project/packageB/module3.py'] = 'import project.packageA\nimport project.packageB.packageC'
+		fcontents['project/packageB/module3.py'] = 'import project.packageB.packageC as pC, project.packageA.module1 as m1, project.packageA.module2 as m2'
 
 		fcontents['project/packageB/packageC/__init__.py'] = ''
 		fcontents['project/packageB/packageC/module4.py'] = 'import project.module0'
+
+		return fcontents
+
+	def _build_simple_IMPORT_FROM_project(self):
+		fcontents = {}
+		fcontents['project/__init__.py'] = ''
+		fcontents['project/module0.py'] = 'from project.packageA.module1 import SomeRandomClass, AnotherClass'
+
+		fcontents['project/packageA/__init__.py'] = ''
+		fcontents['project/packageA/module1.py'] = 'from project.packageA import module2'
+		fcontents['project/packageA/module2.py'] = ''
+
+		fcontents['project/packageB/__init__.py'] = ''
+		fcontents['project/packageB/module3.py'] = 'from project.packageB import packageC\nfrom project.packageA import module1 as m1, module2 as m2'
+
+		fcontents['project/packageB/packageC/__init__.py'] = ''
+		fcontents['project/packageB/packageC/module4.py'] = 'from project.module0 import some_random_method as srm'
+
+		return fcontents
+
+	def _build_simple_RELATIVE_IMPORTS_project(self):
+		fcontents = {}
+		fcontents['project/__init__.py'] = ''
+		fcontents['project/module0.py'] = 'from .packageA import module1 as m1'
+
+		fcontents['project/packageA/__init__.py'] = ''
+		fcontents['project/packageA/module1.py'] = 'from . import module2'
+		fcontents['project/packageA/module2.py'] = ''
+
+		fcontents['project/packageB/__init__.py'] = ''
+		fcontents['project/packageB/module3.py'] = 'from . import packageC\nfrom ..packageA import module1\nfrom ..packageA import module2 as m2'
+
+		fcontents['project/packageB/packageC/__init__.py'] = ''
+		fcontents['project/packageB/packageC/module4.py'] = 'from ... import module0'
 
 		return fcontents
 

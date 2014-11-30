@@ -2,6 +2,7 @@ from parsimonious.grammar import Grammar, NodeVisitor
 import os
 import abc
 import collections
+from collections import Counter
 
 DIR = os.path.dirname(__file__)
 GRAMMAR_DIR = os.path.join(DIR, 'grammars')
@@ -17,11 +18,13 @@ class PackageNode(object):
 	def __repr__(self):
 		return self.name
 
+	def __hash__(self):
+		return hash(self.name)
+
 	def __eq__(self, other):
 		return (self.name == other.name and
-				self.sub_packages == other.sub_packages and
-				self.sub_modules == other.sub_modules)
-
+				Counter(self.sub_packages) == Counter(other.sub_packages) and
+				Counter(self.sub_modules) == Counter(other.sub_modules))
 
 class ModuleNode(object):
 	def __init__(self, name):
@@ -32,10 +35,13 @@ class ModuleNode(object):
 	def __repr__(self):
 		return self.name
 
+	def __hash__(self):
+		return hash(self.name)
+
 	def __eq__(self, other):
 		return (self.name == other.name and
-				self.package_deps == other.package_deps and
-				self.module_deps == other.module_deps)
+				Counter(self.package_deps) == Counter(other.package_deps) and
+				Counter(self.module_deps) == Counter(other.module_deps))
 
 
 # module -> [dependency1, dependency2, dependency3, ...]
@@ -82,11 +88,6 @@ class PythonProject(Codebase):
 
 	Our list of vertices would be ["module0", "packageA.module1", "packageA.module2", 
 								   "packageB.module3", "packageB.packageC.module4"]
-
-	If, for example, packageB.module3 declares "import packageA", then there
-	would be edges going from packageB.module3 to the entire contents of packageA.
-	Because of this, it would be prudent to group modules together by package in
-	a visual representation.
 	"""
 	def __init__(self):
 		py_peg_file = os.path.join(GRAMMAR_DIR, 'python.peg')
@@ -121,9 +122,9 @@ class PythonProject(Codebase):
 			mname_to_node[m] = ModuleNode(self._get_basename(m))
 
 		for m in self._dep_map:
-			curr_node = mname_to_node[m]
+			curr_mnode = mname_to_node[m]
 
-			self._register_parent_package(m, curr_node, pname_to_node, roots)
+			self._register_parent_package(m, curr_mnode, pname_to_node, roots)
 
 			# go through the dependecies of the current module, and link each
 			# to the appropriate package/module node object
@@ -131,28 +132,31 @@ class PythonProject(Codebase):
 				dep = self._normalize_import(m, dep)
 				if dep in pname_to_node:
 					mnode = pname_to_node[dep]
-					curr_node.package_deps.append(mnode)
+					curr_mnode.package_deps.append(mnode)
 				elif dep in mname_to_node:
-					fnode = mname_to_node[dep]
-					curr_node.module_deps.append(fnode)
+					mnode = mname_to_node[dep]
+					curr_mnode.module_deps.append(mnode)
+				else:
+					# the dependency was never registered. this means that it
+					# was a directly importing a method/class, so let's see if
+					# we can't pull out the module containing said method/class
+					
+					# "package.module.SomeClass -> ["package.module", "SomeClass"]
+					potential_module = dep.rsplit('.', 1)[0]
+
+					if potential_module in mname_to_node:
+						mnode = mname_to_node[potential_module]
+
+						# check to make sure we haven't already added this module,
+						# for example, package.module.Class1 and package.module.Class2
+						# will both incorrectly try and add the same module
+						if mnode not in curr_mnode.module_deps:
+							curr_mnode.module_deps.append(mnode)
 
 		# attempt to register each package as a child of its parent package
 		for p in self._package_folders:
-			curr_node = pname_to_node[p]
-			self._register_parent_package(p, curr_node, pname_to_node, roots)
-
-		# def traverse(root):
-		# 	if root:
-		# 		print root.name
-		# 		try:
-		# 			for p in root.sub_packages: traverse(p)
-		# 			for m in root.sub_modules: traverse(m)
-		# 		except:
-		# 			for p in root.package_deps: traverse(p)
-		# 			for m in root.module_deps: traverse(m)
-
-		# for r in roots:
-		# 	traverse(r)
+			curr_pnode = pname_to_node[p]
+			self._register_parent_package(p, curr_pnode, pname_to_node, roots)
 		
 		return roots
 
@@ -194,12 +198,31 @@ class PythonProject(Codebase):
 
 		if root.expr_name == 'import_name':	
 			self._import_name(root, name)
+		elif root.expr_name == 'import_from':
+			self._import_from(root, name)
 		else:
 			for child in root.children:
 				self._traverse_tree(child, name)
 
 	def _import_name(self, root, name):
 		self._search_for_expr(root, 'dotted_name', self._dep_map[name])
+
+	def _import_from(self, root, name):
+		# "from foo.bar import baz" -> ["from", "foo.bar", "import", "baz"]
+		from_package = root.text.split()[1]
+		imports = []
+		self._search_for_expr(root, 'import_as_name', imports)
+		for imp in imports:
+			split_arr = imp.split()
+			if len(split_arr) == 3:
+				# this import is in the form "module as m" -- so extract the module
+				imp = split_arr[0]
+
+			# note: the "module" we are adding to the dependency map may in fact
+			# NOT be a real module -- it could be a method, or a class. but we
+			# will strip this out later after we have processed all of the files and
+			# can safely determine what is a real module and what isn't
+			self._dep_map[name].append(from_package + '.' + imp)
 	
 	def _normalize_import(self, filepath, name):
 		""" Convert a relative import to the full path of the module/package being imported
@@ -214,7 +237,9 @@ class PythonProject(Codebase):
 		while i < len(name) and name[i] == '.':
 			i += 1
 
-		return '.'.join(path_arr[:-i]) + '.' + name[i:]
+		res = '.'.join(path_arr[:-i]) + '.' + name[i:]
+		# print filepath, name, '-->', res
+		return res
 
 	def _search_for_expr(self, root, expr, results):
 		if not root: return
