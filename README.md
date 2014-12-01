@@ -1,6 +1,6 @@
 graf
 ====
-Our beloved graf has currently had its horrible horrible horrible hack-a-thon (backend) code ripped out, and is now being redesigned as a highly modular and stable project -- all in Python!
+Our beloved graf has recently had its horrible, horrible hackathon code ripped out, and is now being redesigned as a highly modular, scalable, and stable project -- with the backend in Python instead of Node.js!
 
 If you want to check out the original version, check under the branch `original_graf`
 
