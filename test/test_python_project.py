@@ -1,5 +1,7 @@
 import unittest
-from core.parse import PythonProject, ModuleNode, PackageNode
+
+from core.python_project import PythonProject
+from core.codebase import ModuleNode, PackageNode
 
 unittest.TestCase.maxDiff = None
 
@@ -28,9 +30,9 @@ class TestPythonProject(unittest.TestCase):
 	def setUp(self):
 		self.py_project = PythonProject()
 
-	@unittest.skip('')
+	# @unittest.skip("foo")
 	def test_normalize_import(self):
-		fpath = 'my_project/packageA/module1.py'
+		fpath = 'my_project.packageA.module1'
 
 		name = '.module2'
 		res = self.py_project._normalize_import(fpath, name)
@@ -50,19 +52,19 @@ class TestPythonProject(unittest.TestCase):
 
 	def test_simple_IMPORT_NAME_build_dependency_tree(self):
 		fcontents = self._build_simple_IMPORT_NAME_project()
-		self._simple_dependency_tree_check(fcontents)
+		self._check_simple_dependency_tree(fcontents)
 
 	def test_simple_IMPORT_FROM_build_dependency_tree(self):
 		fcontents = self._build_simple_IMPORT_FROM_project()
-		self._simple_dependency_tree_check(fcontents)
+		self._check_simple_dependency_tree(fcontents)
 
 	def test_simple_RELATIVE_IMPORTS_project(self):
 		fcontents = self._build_simple_RELATIVE_IMPORTS_project()
-		self._simple_dependency_tree_check(fcontents)
+		self._check_simple_dependency_tree(fcontents)
 
 	# PRIVATE HELPER METHODS
 	
-	def _simple_dependency_tree_check(self, fcontents):
+	def _check_simple_dependency_tree(self, fcontents):
 		project = PackageNode('project')
 		m0 = ModuleNode('module0')
 		pA = PackageNode('packageA')
@@ -102,10 +104,10 @@ class TestPythonProject(unittest.TestCase):
 
 		expected_roots = [project]
 
-		self._register_project_deps(fcontents)
-		roots = self.py_project.build_dependency_tree()
+		self._register_project(fcontents)
+		self.py_project.build_dependency_tree()
 
-		self.assertItemsEqual(roots, expected_roots)
+		self.assertItemsEqual(self.py_project.roots, expected_roots)
 
 	def _build_simple_IMPORT_NAME_project(self):
 		fcontents = {}
@@ -158,9 +160,9 @@ class TestPythonProject(unittest.TestCase):
 
 		return fcontents
 
-	def _register_project_deps(self, fcontents):
+	def _register_project(self, fcontents):
 		for fpath in fcontents:
-			self.py_project.register_dependencies(fpath, fcontents[fpath])
+			self.py_project.register(fpath, fcontents[fpath])
 
 if __name__ == '__main__':
 	unittest.main(verbosity=2)
