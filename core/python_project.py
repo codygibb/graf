@@ -50,6 +50,8 @@ class PythonProject(Codebase):
 			self._traverse_tree(root, name)
 
 	def build_dependency_tree(self):
+		roots = []
+
 		# preprocess modules/packages nodes -- map the string name to the node object
 		package_lookup = {}
 		for p in self._packages:
@@ -61,7 +63,7 @@ class PythonProject(Codebase):
 		for m in self._dep_map:
 			curr_mnode = module_lookup[m]
 
-			self._register_parent_package(m, curr_mnode, package_lookup, self.roots)
+			self._register_parent_package(m, curr_mnode, package_lookup, roots)
 
 			# go through the dependecies of the current module, and link each
 			# to the appropriate package/module node object
@@ -93,7 +95,9 @@ class PythonProject(Codebase):
 		# attempt to register each package as a child of its parent package
 		for p in self._packages:
 			curr_pnode = package_lookup[p]
-			self._register_parent_package(p, curr_pnode, package_lookup, self.roots)
+			self._register_parent_package(p, curr_pnode, package_lookup, roots)
+
+		return roots
 
 	def print_status(self):
 		print 'dep map:'

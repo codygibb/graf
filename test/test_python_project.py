@@ -1,4 +1,5 @@
 import unittest
+import os
 
 from core.python_project import PythonProject
 from core.codebase import ModuleNode, PackageNode
@@ -62,6 +63,11 @@ class TestPythonProject(unittest.TestCase):
 		fcontents = self._build_simple_RELATIVE_IMPORTS_project()
 		self._check_simple_dependency_tree(fcontents)
 
+	# def test_parse_complex_project(self):
+	# 	filepath = os.path.join(os.path.dirname(__file__), 'programs/python.py')
+	# 	with open(filepath) as fh:
+	# 		self.py_project._grammar.parse(fh.read())
+
 	# PRIVATE HELPER METHODS
 	
 	def _check_simple_dependency_tree(self, fcontents):
@@ -105,9 +111,9 @@ class TestPythonProject(unittest.TestCase):
 		expected_roots = [project]
 
 		self._register_project(fcontents)
-		self.py_project.build_dependency_tree()
+		roots = self.py_project.build_dependency_tree()
 
-		self.assertItemsEqual(self.py_project.roots, expected_roots)
+		self.assertItemsEqual(roots, expected_roots)
 
 	def _build_simple_IMPORT_NAME_project(self):
 		fcontents = {}

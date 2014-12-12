@@ -45,7 +45,6 @@ class Codebase(object):
 	def __init__(self, peg_file):
 		with open(peg_file) as peg_fh:
 			self._grammar = Grammar(peg_fh.read())
-		self.roots = []
 
 	@abc.abstractmethod
 	def register(self, filepath, contents):
