@@ -1,4 +1,3 @@
-
 import os
 from collections import Counter
 
@@ -100,13 +99,13 @@ class PythonProject(Codebase):
 		return roots
 
 	def print_status(self):
-		print 'dep map:'
+		print('dep map:')
 		for p in self._dep_map:
-			print "%s -> %s" % (p, self._dep_map[p])
-		print
-		print 'package folders:'
+			print("%s -> %s" % (p, self._dep_map[p]))
+		print()
+		print('package folders:')
 		for m in self._packages:
-			print m
+			print(m)
 
 	# PRIVATE HELPER METHODS
 	

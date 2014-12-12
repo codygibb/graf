@@ -113,7 +113,7 @@ class TestPythonProject(unittest.TestCase):
 		self._register_project(fcontents)
 		roots = self.py_project.build_dependency_tree()
 
-		self.assertItemsEqual(roots, expected_roots)
+		self.assertCountEqual(roots, expected_roots)
 
 	def _build_simple_IMPORT_NAME_project(self):
 		fcontents = {}

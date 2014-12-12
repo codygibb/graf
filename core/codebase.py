@@ -39,9 +39,7 @@ class ModuleNode(object):
 				Counter(self.module_deps) == Counter(other.module_deps))
 
 
-class Codebase(object):
-	__metaclass__ = abc.ABCMeta
-
+class Codebase(object, metaclass=abc.ABCMeta):
 	def __init__(self, peg_file):
 		with open(peg_file) as peg_fh:
 			self._grammar = Grammar(peg_fh.read())
