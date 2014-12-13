@@ -63,10 +63,14 @@ class TestPythonProject(unittest.TestCase):
 		fcontents = self._build_simple_RELATIVE_IMPORTS_project()
 		self._check_simple_dependency_tree(fcontents)
 
-	# def test_parse_complex_project(self):
-	# 	filepath = os.path.join(os.path.dirname(__file__), 'programs/python.py')
-	# 	with open(filepath) as fh:
-	# 		self.py_project._grammar.parse(fh.read())
+	def test_parse_complex_project(self):
+		filepath = os.path.join(os.path.dirname(__file__), 'programs/python.py')
+		with open(filepath) as fh:
+			self.py_project._grammar.parse(fh.read())
+
+	def test_me(self):
+		with open(__file__) as fh:
+			self.py_project._grammar.parse(fh.read())
 
 	# PRIVATE HELPER METHODS
 	

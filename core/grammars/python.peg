@@ -1,4 +1,6 @@
-program = import_stmt*
+program = (import_stmt / doc_comment / line)*
+line = ~".*\n?"
+doc_comment = ~"\"\"\"(.|\n)+?(?=\"\"\")\"\"\"" / "'''(.|\n)+?(?=''')'''"
 import_stmt = _ (import_name / import_from) _
 import_name = "import" _ dotted_as_names
 import_from = "from" _ (("."* dotted_name) / "."+) _ "import" _ ("*" / ("(" import_as_names ")") / import_as_names)
