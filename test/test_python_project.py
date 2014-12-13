@@ -22,7 +22,8 @@ class TestPythonProject(unittest.TestCase):
 
 	module0 -> module1
 	module1 -> module2
-	module3 -> packageA and packageC
+	module2 -> ø
+	module3 -> packageC, module1,  module2
 	module4 -> module0
 
 	with this "simple" structure, different import formats are tested
