@@ -1,10 +1,12 @@
 import unittest
 import os
+import json
 
 from core.python_project import PythonProject
 from core.codebase import ModuleNode, PackageNode
 
 unittest.TestCase.maxDiff = None
+
 
 class TestPythonProject(unittest.TestCase):
 	"""
@@ -65,11 +67,28 @@ class TestPythonProject(unittest.TestCase):
 		self._check_simple_dependency_tree(fcontents)
 
 	def test_parse_complex_project(self):
-		filepath = os.path.join(os.path.dirname(__file__), 'programs/python.py')
+		filepath = os.path.join(os.path.dirname(__file__), 'programs/test.py')
 		with open(filepath) as fh:
 			self.py_project._grammar.parse(fh.read())
 
-	def test_me(self):
+	def test_jsonify_tree(self):
+		fcontents = self._build_simple_IMPORT_NAME_project()
+		self._register_project(fcontents)
+		roots = self.py_project.build_dependency_tree()
+
+		json_str = json.dumps(roots, sort_keys=True)
+		loaded_dicts = json.loads(json_str)
+		loaded_roots = []
+		for d in loaded_dicts:
+			try:
+				r = PackageNode.from_dict(d)
+			except KeyError:
+				r = ModuleNode.from_dict(d)
+			loaded_roots.append(r)
+
+		self.assertCountEqual(roots, loaded_roots)
+
+	def test_parse_myself(self):
 		with open(__file__) as fh:
 			self.py_project._grammar.parse(fh.read())
 

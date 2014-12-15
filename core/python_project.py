@@ -3,6 +3,7 @@ from collections import Counter
 
 from core.codebase import Codebase, PackageNode, ModuleNode
 
+
 class PythonProject(Codebase):
 	""" A python project is defined by having folder packages, with __init__.py defining
 	when a folder is indeed a package. Within a particular folder/package, there can be
@@ -27,7 +28,7 @@ class PythonProject(Codebase):
 	"""
 	def __init__(self):
 		python_peg_file = os.path.join(os.path.dirname(__file__), 'grammars/python.peg')
-		Codebase.__init__(self, python_peg_file)
+		super().__init__(python_peg_file)
 
 		# _package_folders will keep track of all packages that have been registered
 		self._packages = set()
