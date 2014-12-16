@@ -6,7 +6,11 @@ from parsimonious.grammar import Grammar, NodeVisitor
 
 
 class Codebase(metaclass=ABCMeta):
-	
+	""" Codebase is an abstract class that represents an entire project. Specific
+	language projects extend Codebase and implement the register and build_dependency_tree
+	methods.
+	"""
+
 	def __init__(self, peg_file):
 		with open(peg_file) as peg_fh:
 			self._grammar = Grammar(peg_fh.read())
@@ -44,6 +48,7 @@ class Codebase(metaclass=ABCMeta):
 
 
 class Node:
+	""" Represents a node of a project's depedency tree. """
 
 	def __init__(self, name, type_):
 		self.name = name
@@ -51,6 +56,9 @@ class Node:
 		self.children = []
 
 	def get_dict(self):
+		""" Returns a dictionary representation of the node, with the node's
+		children represented as a list of object ids. Used for converting node to json.
+		"""
 		res_dict = {'name': self.name, 'type': self.type}
 		res_dict['children'] = list(map(lambda x: id(x), self.children))
 		return res_dict
@@ -67,12 +75,14 @@ class Node:
 
 
 class PackageNode(Node):
+	""" Wrapper for a node identified as a package """
 
 	def __init__(self, name):
 		super().__init__(name, 'package')
 
 
 class ModuleNode(Node):
+	""" Wrapper for a node identified as a module """
 
 	def __init__(self, name):
 		super().__init__(name, 'module')
