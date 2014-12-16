@@ -71,10 +71,10 @@ class PythonProject(Codebase):
 				dep = self._normalize_import(m, dep)
 				if dep in package_lookup:
 					mnode = package_lookup[dep]
-					curr_mnode.package_deps.append(mnode)
+					curr_mnode.children.append(mnode)
 				elif dep in module_lookup:
 					mnode = module_lookup[dep]
-					curr_mnode.module_deps.append(mnode)
+					curr_mnode.children.append(mnode)
 				else:
 					# the dependency was never registered. this means that it
 					# was a directly importing a method/class, so let's see if
@@ -89,8 +89,8 @@ class PythonProject(Codebase):
 						# check to make sure we haven't already added this module,
 						# for example, package.module.Class1 and package.module.Class2
 						# will both incorrectly try and add the same module
-						if mnode not in curr_mnode.module_deps:
-							curr_mnode.module_deps.append(mnode)
+						if mnode not in curr_mnode.children:
+							curr_mnode.children.append(mnode)
 
 		# attempt to register each package as a child of its parent package
 		for p in self._packages:
@@ -131,9 +131,9 @@ class PythonProject(Codebase):
 			parent_package = split[0]
 			try:
 				if node.__class__.__name__ == 'ModuleNode':
-					package_lookup[parent_package].sub_modules.append(node)
+					package_lookup[parent_package].children.append(node)
 				else:
-					package_lookup[parent_package].sub_packages.append(node)
+					package_lookup[parent_package].children.append(node)
 			except:
 				pass
 

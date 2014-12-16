@@ -23,20 +23,16 @@ def parse(language):
 	else:
 		return 'language not supported', 400
 
-	zfile = utils.download_repo_zip(request.args.get('project_url'))
+	zip_url = request.args.get('project_url') + '/archive/master.zip'
+	files = utils.download_zip_and_get_files(zip_url)
 
-	for info in zfile.infolist():
-		stripped_fname = info.filename.split('/', 1)[1]
-		try:
-			# decoding the bytes of zfile to utf-8 might fail
-			contents = zfile.read(info).decode('utf-8')
-			codebase.register(stripped_fname, contents)
-		except:
-			pass
+	for filename, fcontents in files:
+		stripped_fname = filename.split('/', 1)[1]
+		codebase.register(stripped_fname, fcontents)
 
 	roots = codebase.build_dependency_tree()
 
-	res = make_response(json.dumps(roots), 200)
+	res = make_response(codebase.to_json(roots), 200)
 	res.mimetype = 'application/json'
 	return res
 		

@@ -71,23 +71,6 @@ class TestPythonProject(unittest.TestCase):
 		with open(filepath) as fh:
 			self.py_project._grammar.parse(fh.read())
 
-	def test_jsonify_tree(self):
-		fcontents = self._build_simple_IMPORT_NAME_project()
-		self._register_project(fcontents)
-		roots = self.py_project.build_dependency_tree()
-
-		json_str = json.dumps(roots, sort_keys=True)
-		loaded_dicts = json.loads(json_str)
-		loaded_roots = []
-		for d in loaded_dicts:
-			try:
-				r = PackageNode.from_dict(d)
-			except KeyError:
-				r = ModuleNode.from_dict(d)
-			loaded_roots.append(r)
-
-		self.assertCountEqual(roots, loaded_roots)
-
 	def test_parse_myself(self):
 		with open(__file__) as fh:
 			self.py_project._grammar.parse(fh.read())
@@ -105,32 +88,15 @@ class TestPythonProject(unittest.TestCase):
 		pC = PackageNode('packageC')
 		m4 = ModuleNode('module4')
 
-		project.sub_packages = [pA, pB]
-		project.sub_modules = [m0]
-
-		m0.package_deps = []
-		m0.module_deps = [m1]
-
-		pA.sub_packages = []
-		pA.sub_modules = [m1, m2]
-
-		m1.package_deps = []
-		m1.module_deps = [m2]
-
-		m2.package_deps = []
-		m2.module_deps = []
-
-		pB.sub_packages = [pC]
-		pB.sub_modules = [m3]
-
-		m3.package_deps = [pC]
-		m3.module_deps = [m1, m2]
-
-		pC.sub_packages = []
-		pC.sub_modules = [m4]
-
-		m4.package_deps = []
-		m4.module_deps = [m0]
+		project.children = [pA, pB, m0]
+		m0.children = [m1]
+		pA.children = [m1, m2]
+		m1.children = [m2]
+		m2.children = []
+		pB.children = [pC, m3]
+		m3.children = [pC, m1, m2]
+		pC.children = [m4]
+		m4.children = [m0]
 
 		expected_roots = [project]
 
