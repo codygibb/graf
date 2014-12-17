@@ -6,11 +6,10 @@ from parsimonious.grammar import Grammar, NodeVisitor
 
 
 class Codebase(metaclass=ABCMeta):
-	""" Codebase is an abstract class that represents an entire project. Specific
-	language projects extend Codebase and implement the register and build_dependency_tree
-	methods.
+	""" Abstract class that represents an entire project. Specific language projects
+	extend Codebase and implement the register and build_dependency_tree methods.
 	"""
-
+	
 	def __init__(self, peg_file):
 		with open(peg_file) as peg_fh:
 			self._grammar = Grammar(peg_fh.read())

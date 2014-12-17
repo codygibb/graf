@@ -14,9 +14,10 @@
     "tests"
   ],
   "dependencies": {
-    "threejs": "*",
     "bootstrap": "~3.2.0",
     "jquery": "~2.1.1",
-    "pegjs": "~0.8.0"
+    "angular": "~1.3.7",
+    "d3": "~3.5.2",
+    "angular-ui-router": "~0.2.13"
   }
 }

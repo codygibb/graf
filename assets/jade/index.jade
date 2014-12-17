@@ -1,0 +1,12 @@
+html(ng-app='graf')
+	head
+		title graf
+		link(rel='stylesheet' href='/css/app.css')
+	body
+		div(ui-view='')
+		script(src='/bower_components/angular/angular.min.js')
+		script(src='/bower_components/angular-ui-router/release/angular-ui-router.min.js')
+		script(src='/bower_components/d3/d3.min.js')
+		script(src='/js/app.js')
+		script(src='/js/services.js')
+		script(src='/js/controllers.js')

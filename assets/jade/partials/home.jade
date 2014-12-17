@@ -1,0 +1,14 @@
+.container
+	h1.text-center.logo graf
+	hr
+	form.form-horizontal(name='repoForm' ng-submit='buildGraph(repoForm.$valid)' novalidate='')
+		.form-group
+			.col-sm-6
+				input.form-control(type='url' required='' placeholder='Enter a GitHub URL for a public repository' ng-model='repoUrl')
+			.col-sm-3
+				select.form-control(ng-model='selectedLang' required='' ng-options='lang for lang in supportedLanguages')
+					option(value='') Choose language
+			.col-sm-3
+				button.btn.btn-success(type='submit' ng-disabled='repoForm.$invalid') Build dependency graph
+
+pre {{ result | json }}

@@ -1,0 +1,9 @@
+{
+  "name": "graf",
+  "repository": "https://github.com/codygibb/graf",
+  "dependencies": {
+    "gulp": "^3.8.10",
+    "gulp-jade": "^0.10.0",
+    "gulp-less": "^2.0.1"
+  }
+}
