@@ -4,7 +4,7 @@
 	form.form-horizontal(name='repoForm' ng-submit='buildGraph(repoForm.$valid)' novalidate='')
 		.form-group
 			.col-sm-6
-				input.form-control(type='url' required='' placeholder='Enter a GitHub URL for a public repository' ng-model='repoUrl')
+				input.form-control(type='url' required='' placeholder='Enter URL for a public GitHub repository' ng-model='repoUrl')
 			.col-sm-3
 				select.form-control(ng-model='selectedLang' required='' ng-options='lang for lang in supportedLanguages')
 					option(value='') Choose language
