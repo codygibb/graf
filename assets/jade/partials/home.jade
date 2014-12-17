@@ -9,6 +9,6 @@
 				select.form-control(ng-model='selectedLang' required='' ng-options='lang for lang in supportedLanguages')
 					option(value='') Choose language
 			.col-sm-3
-				button.btn.btn-success(type='submit' ng-disabled='repoForm.$invalid') Build dependency graph
+				button.btn.btn-block.btn-success(type='submit' ng-disabled='repoForm.$invalid') Build dependency graph
 
 pre {{ result | json }}
