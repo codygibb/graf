@@ -4,6 +4,15 @@
 @dependency-highlight: #ff685f;
 @package-highlight: #51caff;
 
+@line-color: @gray-light;
+@text-color: @gray-darker;
+@package-fill: @gray;
+@package-stroke: @gray-light;
+@module-fill: @gray-lighter;
+@module-stroke: @gray-light;
+@selected-percent: 20%;
+@unfocused-percent: 40%;
+
 .logo {
 	font-family: 'Pacifico', cursive;
 }
@@ -12,26 +21,33 @@
 	border: 1px solid @gray-lighter;
 }
 
+small {
+	color: @gray-light;
+}
+
 line {
-	stroke: @gray-light;
+	stroke: @line-color;
 	stroke-width: 1;
 }
 
 text {
-	fill: @gray-darker;
+	fill: @text-color;
 }
 
 .package circle {
-	fill: @gray;
-	stroke: @gray-light;
+	fill: @package-fill;
+	stroke: @package-stroke;
 	stroke-width: 1;
 }
 
 .module circle {
-	fill: @gray-lighter;
-	stroke: @gray-light;
+	fill: @module-fill;
+	stroke: @module-stroke;
 	stroke-width: 1;
 }
+
+
+// HIGHLIGHT
 
 .dependency-highlight {
 	circle {
@@ -61,9 +77,50 @@ line.package-highlight {
 	stroke-width: 1.5;
 }
 
+
+// SELECTED
+
 .selected {
 	circle {
-		stroke: @gray-darker;
 		stroke-width: 2;
 	}
+}
+
+.selected.package {
+	circle {
+		stroke: darken(@package-stroke, @selected-percent);
+	}
+}
+
+.selected.module {
+	circle {
+		stroke: darken(@module-stroke, @selected-percent);
+	}
+}
+
+
+// UNFOCUSED
+
+.unfocused {
+	text {
+		fill: lighten(@text-color, @unfocused-percent);
+	}
+}
+
+.unfocused.package {
+	circle {
+		fill: lighten(@package-fill, @unfocused-percent);
+		stroke: lighten(@package-stroke, @unfocused-percent);
+	}
+}
+
+.unfocused.module {
+	circle {
+		fill: lighten(@module-fill, @unfocused-percent);
+		stroke: lighten(@module-stroke, @unfocused-percent);
+	}
+}
+
+line.unfocused {
+	stroke: lighten(@line-color, @unfocused-percent);
 }

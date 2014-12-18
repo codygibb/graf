@@ -13,27 +13,39 @@ graf.directive('dependencyGraph', function() {
 
 				this.w = $(elem[0]).width();
 				this.h = this.w * 0.6;
+				// this.w = 500;
+				// this.h = 500;
 
 				this.svg = selector.append('svg:svg')
 					.attr('width', this.w)
 					.attr('height', this.h);
 
-				// define arrow head
-				this.svg.append('defs').append('marker')
-					.attr('id', 'arrowhead')
-					.attr('refX', 6) // 9
-					.attr('refY', 2)
-					.attr('markerWidth', 6)
-					.attr('markerHeight', 4)
-					.attr('orient', 'auto')
-					.append('path')
-					.attr('d', 'M 0,0 V 4 L6,2 Z'); //this is actual shape for arrowhead
-
+				// // define arrow head
+				// this.svg.append('defs').append('marker')
+				// 	.attr('id', 'arrowhead')
+				// 	.attr('refX', 6) // 9
+				// 	.attr('refY', 2)
+				// 	.attr('markerWidth', 6)
+				// 	.attr('markerHeight', 4)
+				// 	.attr('orient', 'auto')
+				// 	.append('path')
+				// 	.attr('d', 'M 0,0 V 4 L6,2 Z'); //this is actual shape for arrowhead
+				this.build();
 				this.force = d3.layout.force()
+					.nodes(this.nodes)
+					.links(this.links)
 					.size([this.w, this.h])
-					.charge(-1000)
-					.linkDistance(120)
-					.friction(0.6)
+					.linkStrength(0.1)
+					.friction(0.9)
+					.distance(20)
+					.charge(-400)
+					.gravity(0.1)
+					.theta(0.8)
+					.alpha(0.1)
+					.linkDistance(function(d) {
+						return d.source.children.length + d.target.children.length + 1;
+					})
+					// .friction()
 					.on('tick', this.tick.bind(this))
 					.start();
 
@@ -57,16 +69,17 @@ graf.directive('dependencyGraph', function() {
 			}
 
 			Graph.prototype.update = function() {
-				this.build();
+				// this.build();
 
 				this.svg.selectAll('text').remove();
 
-				// restart force layout
-				this.force
-					.gravity(Math.atan((this.nodes.length || 1) / 50) / Math.PI * 0.4)
-					.nodes(this.nodes)
-					.links(this.links)
-					.start();
+				// // restart force layout
+				// this.force
+				// 	// .gravity(Math.atan((this.nodes.length || 1) / 50) / Math.PI * 0.4)
+				// 	.nodes(this.nodes)
+				// 	.links(this.links)
+				// 	// .gravity(Math.atan((this.nodes.length || 1) / 50) / Math.PI * 0.4)
+				// 	.start();
 
 				// update existing links
 				this.link = this.svg.selectAll('line.link')
@@ -77,7 +90,7 @@ graf.directive('dependencyGraph', function() {
 					
 				this.link.enter().append('svg:line')
 					.attr('class', 'link')
-					.attr('marker-end', 'url(#arrowhead)')
+					// .attr('marker-end', 'url(#arrowhead)')
 					.attr('d', diagonal);
 
 				this.link.exit().remove();
@@ -104,22 +117,11 @@ graf.directive('dependencyGraph', function() {
 					.append('text')
 					.text(function(d) { return d.name; })
 					.attr('text-anchor', 'middle')
-					.attr('dy', -11)
-					.append('rect')
-					.attr('width', '100%')
-					.attr('height', '100%');
+					.attr('dy', function(d) {
+						return -d.radius - 3;
+					});
 					
 				this.node.exit().remove();
-
-				var text = d3.select("text");
-				var bbox = text.node().getBBox();
-				var padding = 2;
-				var rect = this.svg.insert("rect", "text")
-					.attr("x", bbox.x - padding)
-					.attr("y", bbox.y - padding)
-					.attr("width", bbox.width + (padding*2))
-					.attr("height", bbox.height + (padding*2))
-					.style("fill", "red");
 			};
 
 			Graph.prototype.click = function(d) {
@@ -145,18 +147,18 @@ graf.directive('dependencyGraph', function() {
 					this.depGraph[node.children[i]][highlightClass] = bool;
 				}
 
-				this.node
-					.classed(highlightClass, function(d) {
-						return d[highlightClass];
-					})
-					.classed('selected', function(d) {
-						return bool && d === node;
-					});
+				var nodeClsFunctions = {};
+				nodeClsFunctions[highlightClass] = function(d) { return d[highlightClass]; };
+				nodeClsFunctions['selected'] = function(d) { return bool && d === node; };
+				nodeClsFunctions['unfocused'] = function(d) { return bool && !d[highlightClass] && d !== node; };
 
-				this.link
-					.classed(highlightClass, function(d) {
-						return bool && d.source === node;
-					});
+				this.node.classed(nodeClsFunctions);
+
+				var linkClsFunctions = {};
+				linkClsFunctions[highlightClass] = function(d) { return bool && d.source === node; };
+				linkClsFunctions['unfocused'] = function(d) { return bool && d.source !== node; };
+
+				this.link.classed(linkClsFunctions);
 			};
 
 			Graph.prototype.mouseover = function(node) {
