@@ -1,10 +1,16 @@
 var gulp = require('gulp');
 var jade = require('gulp-jade');
 var less = require('gulp-less');
+var clean = require('gulp-clean');
 
 var jadeFiles = './assets/jade/**/*.jade';
+var jadeDest = './static/views/';
+
 var lessFiles = './assets/less/app.less';
+var lessDest = './static/css/';
+
 var jsFiles = './assets/js/**/*.js';
+var jsDest = './static/js/';
 
 gulp.task('jade', function() {
 	return gulp.src(jadeFiles)
@@ -34,4 +40,10 @@ gulp.task('watch', function() {
 	gulp.watch(jadeFiles, ['jade']);
 	gulp.watch(lessFiles, ['less']);
 	gulp.watch(jsFiles, ['js']);
+});
+
+gulp.task('clean', function() {
+	gulp.src(jadeDest).pipe(clean());
+	gulp.src(lessDest).pipe(clean());
+	gulp.src(jsDest).pipe(clean());
 });

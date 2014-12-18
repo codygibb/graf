@@ -1,6 +1,9 @@
 @import './variables.less';
 @import url(http://fonts.googleapis.com/css?family=Pacifico);
 
+@dependency-highlight: #ff685f;
+@package-highlight: #51caff;
+
 .logo {
 	font-family: 'Pacifico', cursive;
 }
@@ -11,16 +14,56 @@
 
 line {
 	stroke: @gray-light;
+	stroke-width: 1;
 }
 
-g.package circle {
-	fill: @gray-lighter;
-	stroke: @gray-dark;
-	stroke-width: 3;
+text {
+	fill: @gray-darker;
 }
 
-g.module circle {
+.package circle {
+	fill: @gray;
+	stroke: @gray-light;
+	stroke-width: 1;
+}
+
+.module circle {
 	fill: @gray-lighter;
 	stroke: @gray-light;
 	stroke-width: 1;
+}
+
+.dependency-highlight {
+	circle {
+		fill: @dependency-highlight;
+	}
+	text {
+		fill: darken(@dependency-highlight, 25%);
+	}
+}
+
+.package-highlight {
+	circle {
+		fill: @package-highlight;
+	}
+	text {
+		fill: darken(@package-highlight, 25%);
+	}
+}
+
+line.dependency-highlight {
+	stroke: lighten(@dependency-highlight, 10%);
+	stroke-width: 1.5;
+}
+
+line.package-highlight {
+	stroke: lighten(@package-highlight, 10%);
+	stroke-width: 1.5;
+}
+
+.selected {
+	circle {
+		stroke: @gray-darker;
+		stroke-width: 2;
+	}
 }
