@@ -12,7 +12,10 @@ class TestCodebase(unittest.TestCase):
 		m2 = ModuleNode('m2')
 
 		p1.children = [m1, m2]
+		p1.parents = []
 		m1.children = [m2]
+		m1.parents = [p1]
+		m2.parents = [m1, p1]
 
 		roots = [p1]
 
@@ -20,17 +23,20 @@ class TestCodebase(unittest.TestCase):
 			id(p1): {
 				'name': 'p1',
 				'type': 'package',
-				'children': [id(m1), id(m2)]
+				'children': [id(m1), id(m2)],
+				'parents': []
 			},
 			id(m1): {
 				'name': 'm1',
 				'type': 'module',
-				'children': [id(m2)]
+				'children': [id(m2)],
+				'parents': [id(p1)]
 			},
 			id(m2): {
 				'name': 'm2',
 				'type': 'module',
-				'children': []
+				'children': [],
+				'parents': [id(m1), id(p1)]
 			}
 		}
 

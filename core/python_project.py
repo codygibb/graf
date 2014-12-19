@@ -50,8 +50,6 @@ class PythonProject(Codebase):
 			self._traverse_tree(root, name)
 
 	def build_dependency_tree(self):
-		roots = []
-
 		# preprocess modules/packages nodes -- map the string name to the node object
 		package_lookup = {}
 		for p in self._packages:
@@ -62,19 +60,18 @@ class PythonProject(Codebase):
 
 		for m in self._dep_map:
 			curr_mnode = module_lookup[m]
-
-			self._register_parent_package(m, curr_mnode, package_lookup, roots)
+			
+			self._register_parent_package(m, curr_mnode, package_lookup)
 
 			# go through the dependecies of the current module, and link each
 			# to the appropriate package/module node object
 			for dep in self._dep_map[m]:
 				dep = self._normalize_import(m, dep)
+				child = None
 				if dep in package_lookup:
-					mnode = package_lookup[dep]
-					curr_mnode.children.append(mnode)
+					child = package_lookup[dep]
 				elif dep in module_lookup:
-					mnode = module_lookup[dep]
-					curr_mnode.children.append(mnode)
+					child = module_lookup[dep]
 				else:
 					# the dependency was never registered. this means that it
 					# was a directly importing a method/class, so let's see if
@@ -90,25 +87,37 @@ class PythonProject(Codebase):
 						# for example, package.module.Class1 and package.module.Class2
 						# will both incorrectly try and add the same module
 						if mnode not in curr_mnode.children:
-							curr_mnode.children.append(mnode)
+							child = mnode
+				
+				if child:
+					# we successfully found a dependency! add a two-way edge
+					curr_mnode.children.append(child)
+					child.parents.append(curr_mnode)
 
 		# attempt to register each package as a child of its parent package
 		for p in self._packages:
-			curr_pnode = package_lookup[p]
-			self._register_parent_package(p, curr_pnode, package_lookup, roots)
+			self._register_parent_package(p, package_lookup[p], package_lookup)
 
-		return roots
-
-	def print_status(self):
-		print('dep map:')
-		for p in self._dep_map:
-			print("%s -> %s" % (p, self._dep_map[p]))
-		print()
-		print('package folders:')
-		for m in self._packages:
-			print(m)
+		return self._find_roots(package_lookup, module_lookup)
 
 	# PRIVATE HELPER METHODS
+	
+	def _find_roots(self, package_lookup, module_lookup):
+		""" Given a dictionaries of string name to node object, returns a list
+		of all the root nodes of the tree.
+		"""
+		roots = []
+
+		def add_roots(lookup):
+			for name in lookup:
+				node = lookup[name]
+				if not node.parents:
+					roots.append(node)
+
+		add_roots(package_lookup)
+		add_roots(module_lookup)
+
+		return roots
 	
 	def _get_basename(self, name):
 		split = name.rsplit('.', 1)
@@ -117,23 +126,19 @@ class PythonProject(Codebase):
 		except:
 			return split[0]
 	
-	def _register_parent_package(self, name, node, package_lookup, roots):
+	def _register_parent_package(self, name, node, package_lookup):
 		""" Register the given package/module name with corresponding PackageNode/ModuleNode
 		as a child of its parent package (using the package_lookup dictionary to lookup a
-		package string to the corresponding PackageNode). If the parent package is a
-		root package, it is added to roots.
+		package string to the corresponding PackageNode).
 		"""
 		split = name.rsplit('.', 1)
-		if len(split) == 1:
-			# no parent package, so must be a root
-			roots.append(node)
-		else:
+		if len(split) > 1:
+			# this package/module has a parent, process accordingly
 			parent_package = split[0]
 			try:
-				if node.__class__.__name__ == 'ModuleNode':
-					package_lookup[parent_package].children.append(node)
-				else:
-					package_lookup[parent_package].children.append(node)
+				pnode = package_lookup[parent_package]
+				pnode.children.append(node)
+				node.parents.append(pnode)
 			except:
 				pass
 

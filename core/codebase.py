@@ -53,13 +53,15 @@ class Node:
 		self.name = name
 		self.type = type_
 		self.children = []
+		self.parents = []
 
 	def get_dict(self):
 		""" Returns a dictionary representation of the node, with the node's
 		children represented as a list of object ids. Used for converting node to json.
 		"""
 		res_dict = {'name': self.name, 'type': self.type}
-		res_dict['children'] = list(map(lambda x: id(x), self.children))
+		res_dict['children'] = self._get_id_list(self.children)
+		res_dict['parents'] = self._get_id_list(self.parents)
 		return res_dict
 
 	def __repr__(self):
@@ -71,6 +73,11 @@ class Node:
 	def __eq__(self, other):
 		return (self.name == other.name and self.type == other.type and
 				Counter(self.children) == Counter(other.children))
+
+	# PRIVATE HELPER METHODS
+	
+	def _get_id_list(self, list_):
+		return list(map(lambda x: id(x), list_))
 
 
 class PackageNode(Node):

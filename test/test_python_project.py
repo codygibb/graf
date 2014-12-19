@@ -89,14 +89,31 @@ class TestPythonProject(unittest.TestCase):
 		m4 = ModuleNode('module4')
 
 		project.children = [pA, pB, m0]
+		project.parents = []
+
 		m0.children = [m1]
+		m0.parents = [project, m4]
+
 		pA.children = [m1, m2]
+		pA.parents = [project]
+
 		m1.children = [m2]
+		m1.parents = [m0, m3, pA]
+
 		m2.children = []
+		m2.parents = [pA, m1, m3]
+
 		pB.children = [pC, m3]
+		pB.parents = [project]
+
 		m3.children = [pC, m1, m2]
+		m3.parents = [pB]
+
 		pC.children = [m4]
+		pC.parents = [pB, m3]
+
 		m4.children = [m0]
+		m4.parents = [pC]
 
 		expected_roots = [project]
 
