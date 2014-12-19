@@ -43,7 +43,7 @@ graf.directive('dependencyGraph', function() {
 					.theta(0.8)
 					.alpha(0.1)
 					.linkDistance(function(d) {
-						return d.source.children.length + d.target.children.length + 1;
+						return (d.source.children.length + d.target.children.length + 1) / 3.0;
 					})
 					// .friction()
 					.on('tick', this.tick.bind(this))

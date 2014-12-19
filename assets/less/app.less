@@ -3,7 +3,6 @@
 
 @dependency-highlight: #ff685f;
 @package-highlight: #51caff;
-
 @line-color: @gray-light;
 @text-color: @gray-darker;
 @package-fill: @gray;
@@ -17,8 +16,16 @@
 	font-family: 'Pacifico', cursive;
 }
 
-#d3canvas {
+.visualization {
 	border: 1px solid @gray-lighter;
+	position: relative;
+}
+
+#status-text {
+	position: absolute;
+	left: 0;
+	right: 0;
+	padding: 10;
 }
 
 small {

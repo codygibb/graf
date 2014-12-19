@@ -11,9 +11,11 @@
 			.col-sm-3
 				button.btn.btn-block.btn-success(type='submit' ng-disabled='repoForm.$invalid') Build dependency graph
 .container
-	#d3canvas(dependency-graph='dependencyGraph')
+	.visualization(dependency-graph='dependencyGraph')
+		#status-text.text-center(status='buildStatus' in-progress='parsing dependencies...'
+														 failure="oh snap! we weren't able to scrape code from that url.")
 
 .container
 	br
 	p.text-center
-		small This is the footer text.
+		small Go Huskies!
