@@ -20,16 +20,17 @@ graf.directive('dependencyGraph', function() {
 					.attr('width', this.w)
 					.attr('height', this.h);
 
-				// // define arrow head
-				// this.svg.append('defs').append('marker')
-				// 	.attr('id', 'arrowhead')
-				// 	.attr('refX', 6) // 9
-				// 	.attr('refY', 2)
-				// 	.attr('markerWidth', 6)
-				// 	.attr('markerHeight', 4)
-				// 	.attr('orient', 'auto')
-				// 	.append('path')
-				// 	.attr('d', 'M 0,0 V 4 L6,2 Z'); //this is actual shape for arrowhead
+				// define arrow head
+				this.svg.append('defs').append('marker')
+					.attr('id', 'arrowhead')
+					.attr('refX', 6) // 9
+					.attr('refY', 2)
+					.attr('markerWidth', 6)
+					.attr('markerHeight', 4)
+					.attr('orient', 'auto')
+					.append('path')
+					.attr('d', 'M 0,0 V 4 L6,2 Z'); //this is actual shape for arrowhead
+
 				this.build();
 				this.force = d3.layout.force()
 					.nodes(this.nodes)
@@ -147,18 +148,54 @@ graf.directive('dependencyGraph', function() {
 					this.depGraph[node.children[i]][highlightClass] = bool;
 				}
 
+				for (var i in node.parents) {
+					var parent = this.depGraph[node.parents[i]];
+					var parentHighlight = (parent.type === 'package')
+						? 'parent-package-highlight'
+						: 'parent-module-highlight';
+					parent[parentHighlight] = bool;
+				}
+
 				var nodeClsFunctions = {};
-				nodeClsFunctions[highlightClass] = function(d) { return d[highlightClass]; };
-				nodeClsFunctions['selected'] = function(d) { return bool && d === node; };
-				nodeClsFunctions['unfocused'] = function(d) { return bool && !d[highlightClass] && d !== node; };
+				nodeClsFunctions[highlightClass] = function(d) {
+					return d[highlightClass];
+				};
+				nodeClsFunctions['selected'] = function(d) {
+					return bool && d === node;
+				};
+				nodeClsFunctions['parent-package-highlight'] = function(d) {
+					return d['parent-package-highlight'];
+				};
+				nodeClsFunctions['parent-module-highlight'] = function(d) {
+					return d['parent-module-highlight'];
+				};
+				nodeClsFunctions['unfocused'] = function(d) {
+					return bool && !d[highlightClass] && d !== node &&
+						   !d['parent-package-highlight'] && !d['parent-module-highlight'];
+				};
 
 				this.node.classed(nodeClsFunctions);
 
 				var linkClsFunctions = {};
-				linkClsFunctions[highlightClass] = function(d) { return bool && d.source === node; };
-				linkClsFunctions['unfocused'] = function(d) { return bool && d.source !== node; };
+				linkClsFunctions[highlightClass] = function(d) {
+						return bool && d.source === node;
+				};
+				linkClsFunctions['parent-package-highlight'] = function(d) {
+					return d.source['parent-package-highlight'];
+				};
+				linkClsFunctions['parent-module-highlight'] = function(d) {
+					return d.source['parent-module-highlight'];
+				};
+				linkClsFunctions['unfocused'] = function(d) {
+					return bool && d.source !== node && d.target !== node;
+				};
 
-				this.link.classed(linkClsFunctions);
+				this.link.classed(linkClsFunctions)
+					.attr('marker-end', function(d) {
+						if (bool && (d.source === node || d.target === node)) {
+							return 'url(#arrowhead)';
+						}
+					});
 			};
 
 			Graph.prototype.mouseover = function(node) {

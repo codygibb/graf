@@ -3,6 +3,8 @@
 
 @dependency-highlight: #ff685f;
 @package-highlight: #51caff;
+@parent-package-highlight: #b447ff;
+@parent-module-highlight: #ffbe00;
 @line-color: @gray-light;
 @text-color: @gray-darker;
 @package-fill: @gray;
@@ -56,32 +58,46 @@ text {
 
 // HIGHLIGHT
 
-.dependency-highlight {
+.node-highlight-mixin(@highlight-color) {
 	circle {
-		fill: @dependency-highlight;
+		fill: @highlight-color;
 	}
 	text {
-		fill: darken(@dependency-highlight, 25%);
+		fill: darken(@highlight-color, 25%);
 	}
 }
 
-.package-highlight {
-	circle {
-		fill: @package-highlight;
-	}
-	text {
-		fill: darken(@package-highlight, 25%);
-	}
+.line-highlight-mixin(@highlight-color) {
+	stroke: lighten(@highlight-color, 10%);
+	stroke-width: 1.5;
 }
 
+g.dependency-highlight {
+	.node-highlight-mixin(@dependency-highlight);
+}
 line.dependency-highlight {
-	stroke: lighten(@dependency-highlight, 10%);
-	stroke-width: 1.5;
+	.line-highlight-mixin(@dependency-highlight)
 }
 
+g.package-highlight {
+	.node-highlight-mixin(@package-highlight);
+}
 line.package-highlight {
-	stroke: lighten(@package-highlight, 10%);
-	stroke-width: 1.5;
+	.line-highlight-mixin(@package-highlight);
+}
+
+g.parent-package-highlight {
+	.node-highlight-mixin(@parent-package-highlight);
+}
+line.parent-package-highlight {
+	.line-highlight-mixin(@parent-package-highlight);
+}
+
+g.parent-module-highlight {
+	.node-highlight-mixin(@parent-module-highlight);
+}
+line.parent-module-highlight {
+	.line-highlight-mixin(@parent-module-highlight);
 }
 
 
