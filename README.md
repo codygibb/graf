@@ -8,6 +8,11 @@ If you want to check out the original version, check under the branch `original_
 
 _Note: run all of the following commands from the root of the project_
 
+First download Python 3.4 and pip for Python 3.4 if you haven't:
+
+    $ brew install python3
+    $ brew install pip3
+
 To get a development environment set up, you'll need to download all of the dependencies like so:
 
     $ pip3 install -r requirements.txt
