@@ -123,45 +123,15 @@ function Node(filepath, numNeighbors, lineNum) {
 	this.object = new THREE.Sprite(material);
 	this.object.scale.normalize().multiplyScalar(scaleAmt);
 
-	// var material = new THREE.SpriteCanvasMaterial({
-	// 	color: 0x0,
-	// 	program: function(context) {
-	// 		context.beginPath();
-	// 		context.arc(0, 0, 0.5, 0, Math.PI * 2, true);
-	// 		context.fill();
-	// 	}
-	// });
-	// this.object = new THREE.Sprite(material);
-	// this.object.scale.normalize().multiplyScalar(50 * numNeighbors);
-	// console.log(filepath, numNeighbors);
+	var outlineMaterial1 = new THREE.MeshBasicMaterial( { color: 0xffffff, opacity: 1,  side: THREE.BackSide } );
+	this.highlight = new THREE.Mesh( material, outlineMaterial1 );
+	this.highlight.position = this.object.position;
+	this.highlight.scale.multiplyScalar(1.05);
+	
 
 	this.pos = this.object.position;
 	this.pos.set(Math.random() * 200, Math.random() * 200, Math.random() * 200);
 
-	// this.textGeo = new THREE.TextGeometry(this.filepath);
-	// this.label = new THREE.Mesh(this.textGeo, new THREE.MeshPhongMaterial({ color: 0x0 }));
-	// this.label.position.set(this.pos.x, this.pos.y - 100, this.pos.z);
-
-	// var canvas = document.createElement('canvas');
-	// canvas.width = 1000;
-	// canvas.height = 100;
-
-	// var context = canvas.getContext('2d');
-	// context.fillStyle = 'yellow';
-	// context.fillRect(0, 0, 1000, 100);
-	// context.font = '24pt Arial';
-	// context.textAlign = 'center';
-	// context.textBaseline = 'middle';
-	// context.fillStyle = 'white';
-	// context.fillText(this.filepath, 0, 0);
-
-	// var texture = new THREE.Texture(canvas);
-	// texture.needsUpdate = true;
-	// this.label = new THREE.Sprite({
-	// 	map: texture,
-	// 	useScreenCoordinates: false
-	// });
-	
 	this.label = makeTextSprite(this.filepath, {
 		fontsize: 18,
 		fontface: "Arial",
@@ -197,6 +167,7 @@ Node.prototype.draw = function() {
 	// scene.add(this.textBubble.mesh);
 	scene.add(this.label);
 	scene.add(this.object);
+	scene.add(this.highlight);
 	
 };
 
@@ -244,7 +215,7 @@ function Edge(startNode, endNode, weight) {
 	// this.line = new THREE.Mesh( geometry, material );
 
 	this.line = new THREE.Line(this.geometry, new THREE.LineBasicMaterial({
-		linewidth: Math.sqrt(weight * 1.1),
+		linewidth: weight,// Math.sqrt(weight * 1.1),
 		color: 0xffffff , 
 		opacity: 0.8,
 		transparent: true, 
@@ -269,6 +240,7 @@ var container, stats;
 var camera, controls, scene, projector, renderer;
 var plane;
 var objects = [];
+var highlights = [];
 var effectFXAA;
 var composer;
 var sunPosition = new THREE.Vector3( 0, 0, 0);
@@ -281,7 +253,7 @@ var postprocessing = { enabled : true };
 var margin = 100;
 var height = window.innerHeight - 2 * margin;
 var screenSpacePosition = new THREE.Vector3();
-
+var lensFlare, textureFlare1, textureFlare2;
 var mouse = new THREE.Vector2(),
 offset = new THREE.Vector3(),
 INTERSECTED, SELECTED;
@@ -384,8 +356,11 @@ function init() {
 	scene = new THREE.Scene();
 	scene.fog = new THREE.FogExp2( 0x000000, 0.0001 );
 
-	scene.add( new THREE.AmbientLight( 0x505050 ) );
-
+	scene.add( new THREE.AmbientLight( 0x000000 ) );
+	textureFlare1 = THREE.ImageUtils.loadTexture( "../images/lensflare0.png" );
+	textureFlare2 = THREE.ImageUtils.loadTexture( "../images/lensflare2.png" );
+	lensFlare = addLensFlare(0, 0, 0, 100, textureFlare1);
+	scene.add(lensFlare);
 	var light = new THREE.SpotLight( 0xffffff, 1.5 );
 	light.position.set( 0, 500, 2000 );
 	light.castShadow = true;
@@ -524,6 +499,40 @@ function init() {
 
 	window.addEventListener( 'resize', onWindowResize, false );
 }
+//	This function retuns a lesnflare THREE object to be .add()ed to the scene graph
+function addLensFlare(x,y,z, size, overrideImage){
+  var flareColor = new THREE.Color( 0xffffff );
+
+  this.lensFlare = new THREE.LensFlare( overrideImage, 700, 0.0, THREE.AdditiveBlending, flareColor );
+
+  //	we're going to be using multiple sub-lens-flare artifacts, each with a different size
+  this.lensFlare.add( textureFlare1, 4096, 0.0, THREE.AdditiveBlending );
+  this.lensFlare.add( textureFlare2, 512, 0.0, THREE.AdditiveBlending );
+  this.lensFlare.add( textureFlare2, 512, 0.0, THREE.AdditiveBlending );
+  this.lensFlare.add( textureFlare2, 512, 0.0, THREE.AdditiveBlending );
+
+  //	and run each through a function below
+  this.lensFlare.customUpdateCallback = lensFlareUpdateCallback;
+
+  this.lensFlare.position = new THREE.Vector3(x,y,z);
+  this.lensFlare.size = size ? size : 16000 ;
+  return this.lensFlare;
+}
+
+//	this function will operate over each lensflare artifact, moving them around the screen
+function lensFlareUpdateCallback() {
+	var vecX = -screenSpacePosition.x * 2;
+	var vecY = -screenSpacePosition.y * 2;
+	var size = this.lensFlare.size ? this.lensFlare.size : 16000;
+
+	var camDistance = camera.position.length();
+
+	this.lensFlare.x = this.screenSpacePosition.x + vecX * this.lensFlare.distance;
+	this.lensFlare.y = this.screenSpacePosition.y + vecY * this.lensFlare.distance;
+
+	this.lensFlare.scale = size / camDistance;
+	this.lensFlare.rotation = 0;
+}
 
 function onWindowResize() {
 
@@ -534,6 +543,52 @@ function onWindowResize() {
 	effectFXAA.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );	
 	composer.reset();
 
+}
+function checkHighlight(){
+	// find intersections
+
+	// create a Ray with origin at the mouse position
+	//   and direction into the scene (camera direction)
+	var vector = new THREE.Vector3( mouse.x, mouse.y, 1 );
+	projector.unprojectVector( vector, camera );
+	var ray = new THREE.Raycaster( camera.position, vector.sub( camera.position ).normalize() );
+
+	// create an array containing all objects in the scene with which the ray intersects
+	var intersects = ray.intersectObjects( objects );
+
+	// INTERSECTED = the object in the scene currently closest to the camera 
+	//		and intersected by the Ray projected from the mouse position 	
+
+	// if there is one (or more) intersections
+	if ( intersects.length > 0 )
+	{	// case if mouse is not currently over an object
+		if(INTERSECTED==null){
+			INTERSECTED = intersects[ 0 ];
+			INTERSECTED.object.opacity = 1;
+		}
+		else{	// if thse mouse is over an object
+			INTERSECTED.object.opacity= .8;
+			INTERSECTED.object.geometry.colorsNeedUpdate=true;
+			INTERSECTED = intersects[ 0 ];
+			INTERSECTED.face.opacity = 1;			
+		}
+		// upsdate mouseSphere coordinates and update colors
+		mouseSphereCoords = [INTERSECTED.point.x,INTERSECTED.point.y,INTERSECTED.point.z];
+
+	} 
+	else // there are no intersections
+	{
+		// restore previous intersection object (if it exists) to its original color
+		if ( INTERSECTED ){
+			// INTERSECTED.face.object = 1;
+			// INTERSECTED.object.geometry.colorsNeedUpdate=true;
+		}
+		// remove previous intersection object reference
+		//     by setting current intersection object to "nothing"
+
+		INTERSECTED = null;
+
+	}
 }
 
 function onDocumentMouseMove( event ) {
@@ -562,6 +617,8 @@ function onDocumentMouseMove( event ) {
 
 	if ( intersects.length > 0 ) {
 
+		// intersects[ 0 ].object.traverse( function ( object ) { object.visible = false; } );
+
 		if ( INTERSECTED != intersects[ 0 ].object ) {
 
 			// if ( INTERSECTED ) INTERSECTED.material.color.setHex( INTERSECTED.currentHex );
@@ -585,6 +642,7 @@ function onDocumentMouseMove( event ) {
 		container.style.cursor = 'auto';
 
 	}
+	checkHighlight();
 
 }
 
@@ -632,6 +690,27 @@ function onDocumentMouseDown( event ) {
 		var intersects = raycaster.intersectObject( plane );
 		offset.copy( intersects[ 0 ].point ).sub( plane.position );
 		container.style.cursor = 'move';
+		// var index = objects.indexOf(SELECTED);
+		// var selectedObject = nodes[index];
+		// console.log(selectedObject.position);
+		// var tween = new TWEEN.Tween(camera.position).to({
+		//     x: SELECTED.position.x,
+		//     y: SELECTED.position.y,
+		//     z: 1
+		// }).easing(TWEEN.Easing.Linear.None).onUpdate(function () {
+		//     camera.lookAt(camera.target);
+		// }).onComplete(function () {
+		//     camera.lookAt(SELECTED.position);
+		// }).start();
+
+		// var tween = new TWEEN.Tween(camera.target).to({
+		//     x: SELECTED.position.x,
+		//     y: SELECTED.position.y,
+		//     z: 0
+		// }).easing(TWEEN.Easing.Linear.None).onUpdate(function () {
+		// }).onComplete(function () {
+		//     camera.lookAt(SELECTED.position);
+		// }).start();
 	}
 }
 
@@ -659,10 +738,10 @@ function onDocumentMouseUp( event ) {
 function animate() {
 
 	requestAnimationFrame( animate );
-
+	lensFlareUpdateCallback();
 	render();
 	stats.update();
-
+	TWEEN.update();
 }
 
 function render() {
