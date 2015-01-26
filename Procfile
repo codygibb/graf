@@ -1,1 +1,1 @@
-web: python3 graf.py
+web: gunicorn graf:app --log-file=-
