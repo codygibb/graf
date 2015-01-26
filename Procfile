@@ -1,4 +1,3 @@
 npm install
-bower install
-pip3 install -r
+pip3 install -r requirements.txt
 python3 graf.py
