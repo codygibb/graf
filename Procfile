@@ -1,1 +1,1 @@
-web: gunicorn graf:app --log-file=-
+web: npm start
