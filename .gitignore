@@ -54,7 +54,7 @@ docs/_build/
 target/
 
 # Static/compiled stuff
-static/
+# static/
 
 # npm
 node_modules/
