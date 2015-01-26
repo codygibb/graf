@@ -1,6 +1,7 @@
 {
   "name": "graf",
   "repository": "https://github.com/codygibb/graf",
+  "postinstall": "node node_modules/.bin/gulp default",
   "dependencies": {
     "gulp": "^3.8.10",
     "gulp-clean": "^0.3.1",
