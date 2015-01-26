@@ -3,13 +3,13 @@
 
 @dependency-highlight: #ff685f;
 @package-highlight: #51caff;
-@parent-package-highlight: #b447ff;
-@parent-module-highlight: #ffbe00;
-@line-color: @gray-light;
+@parent-package-highlight: #242bff;
+@parent-module-highlight: #ffb21e;
+@line-color: fade(@gray, 30%);
 @text-color: @gray-darker;
 @package-fill: @gray;
 @package-stroke: @gray-light;
-@module-fill: @gray-lighter;
+@module-fill: lighten(@gray-lighter, 25%);
 @module-stroke: @gray-light;
 @selected-percent: 20%;
 @unfocused-percent: 40%;
@@ -28,6 +28,11 @@
 	left: 0;
 	right: 0;
 	padding: 10;
+}
+
+#arrowhead {
+	stroke: fade(@gray, 90%);
+	fill: fade(@gray, 90%);
 }
 
 small {
@@ -69,7 +74,7 @@ text {
 
 .line-highlight-mixin(@highlight-color) {
 	stroke: lighten(@highlight-color, 10%);
-	stroke-width: 1.5;
+	stroke-width: 2;
 }
 
 g.dependency-highlight {
@@ -105,6 +110,9 @@ line.parent-module-highlight {
 
 .selected {
 	circle {
+		stroke-width: 2;
+	}
+	text {
 		stroke-width: 2;
 	}
 }

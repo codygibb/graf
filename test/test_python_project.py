@@ -34,7 +34,6 @@ class TestPythonProject(unittest.TestCase):
 	def setUp(self):
 		self.py_project = PythonProject()
 
-	# @unittest.skip("foo")
 	def test_normalize_import(self):
 		fpath = 'my_project.packageA.module1'
 

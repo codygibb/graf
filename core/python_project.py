@@ -27,8 +27,7 @@ class PythonProject(Codebase):
 				module4.py
 	"""
 	def __init__(self):
-		python_peg_file = os.path.join(os.path.dirname(__file__), 'grammars/python.peg')
-		super().__init__(python_peg_file)
+		super().__init__('python')
 
 		# _package_folders will keep track of all packages that have been registered
 		self._packages = set()

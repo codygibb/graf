@@ -1,18 +1,22 @@
 from abc import ABCMeta, abstractmethod
 from collections import Counter
+import os
 import json
 
-from parsimonious.grammar import Grammar, NodeVisitor
+from parsimonious.grammar import Grammar
 
+GRAMMAR_DIR = os.path.join(os.path.dirname(__file__), 'grammars')
 
 class Codebase(metaclass=ABCMeta):
 	""" Abstract class that represents an entire project. Specific language projects
 	extend Codebase and implement the register and build_dependency_tree methods.
 	"""
 	
-	def __init__(self, peg_file):
-		with open(peg_file) as peg_fh:
-			self._grammar = Grammar(peg_fh.read())
+	def __init__(self, language):
+		peg_file = os.path.join(GRAMMAR_DIR, language + '.peg')
+		common_file = os.path.join(GRAMMAR_DIR, 'common.peg')
+		with open(peg_file) as peg_fh, open(common_file) as common_fh:
+			self._grammar = Grammar(peg_fh.read() + '\n' + common_fh.read())
 
 	@abstractmethod
 	def register(self, filepath, contents):

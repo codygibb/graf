@@ -20,18 +20,27 @@ graf.directive('dependencyGraph', function() {
 					.attr('width', this.w)
 					.attr('height', this.h);
 
+				var arrowSizeFactor = 1.2;
+
 				// define arrow head
 				this.svg.append('defs').append('marker')
 					.attr('id', 'arrowhead')
-					.attr('refX', 6) // 9
-					.attr('refY', 2)
-					.attr('markerWidth', 6)
-					.attr('markerHeight', 4)
+					.attr('refX', 3 * arrowSizeFactor) // 9
+					.attr('refY', 1 * arrowSizeFactor)
+					.attr('markerWidth', 3 * arrowSizeFactor)
+					.attr('markerHeight', 2 * arrowSizeFactor)
 					.attr('orient', 'auto')
 					.append('path')
 					.attr('d', 'M 0,0 V 4 L6,2 Z'); //this is actual shape for arrowhead
 
 				this.build();
+
+				// divide by a factor of the total number of nodes to try and
+				// fill up the screen evenly for both dense and sparse graphs
+				// var spaceReduction = this.nodes.length;
+				var spaceReduction = this.nodes.length;
+				console.log(this.nodes.length, spaceReduction)
+
 				this.force = d3.layout.force()
 					.nodes(this.nodes)
 					.links(this.links)
@@ -39,12 +48,19 @@ graf.directive('dependencyGraph', function() {
 					.linkStrength(0.1)
 					.friction(0.9)
 					.distance(20)
-					.charge(-400)
+					.charge(function(d) {
+						var weight = d.children.length + d.parents.length + 1; 
+
+						return -4000 * weight / spaceReduction;
+					})
 					.gravity(0.1)
 					.theta(0.8)
 					.alpha(0.1)
 					.linkDistance(function(d) {
-						return (d.source.children.length + d.target.children.length + 1) / 3.0;
+						var weight = d.source.children.length + d.target.children.length +
+									 d.source.parents.length + d.target.parents.length + 1;
+
+						return 0.75 * weight;
 					})
 					// .friction()
 					.on('tick', this.tick.bind(this))
